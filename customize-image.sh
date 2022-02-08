@@ -57,20 +57,5 @@ main() {
 
   mkdir -p "${tmpmount}/etc/nixos"
   find ./nixos -type f -name '*.nix' -exec cp -t "${tmpmount}/etc/nixos/" {} +
-
-  # Populate a little script for making a swapfile
-  # I create this script instead of creating the actual swapfile so I don't
-  # have an empty 1G file sitting around in the image
-  cat << 'EOF' > /mnt/root/make_swap.sh
-#!/usr/bin/env bash
-cd /mnt/swap
-touch ./swapfile
-chattr +C ./swapfile
-btrfs property set ./swapfile compression none
-fallocate -l 1G ./swapfile
-chmod 0600 ./swapfile
-mkswap ./swapfile
-EOF
-  chmod +x /mnt/root/make_swap.sh
 }
 main "$@"
