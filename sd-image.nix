@@ -5,8 +5,8 @@
   ];
 
   boot = {
-    kernelParams = [ "console=tty0" "console=ttyS0" "root=LABEL=NIXOS_SD" "rootfstype=btrfs" ];
-    initrd.availableKernelModules = [ "usbhid" ];
+    kernelParams = [ "console=tty1" "console=ttyAMA0" "console=ttyS0,1115200" "root=LABEL=NIXOS_SD" "rootfstype=btrfs" ];
+    initrd.availableKernelModules = [ "btrfs" "usbhid" ];
     loader = {
       grub.enable = false;
       generic-extlinux-compatible.enable = true;
@@ -30,6 +30,7 @@
     compressImage = false;
     imageName = "nixos-btrfs.img";
   };
+  hardware.enableRedistributableFirmware = true;
 
   fileSystems = {
     "/" = {
@@ -37,64 +38,28 @@
       fsType = "btrfs";
       options = [ "noatime" "ssd_spread" "compress-force=zstd" "autodefrag" ];
     };
+    "/firmware" = {
+      device = "/dev/disk/by-label/FIRMWARE";
+      fsType = "vfat";
+    };
   };
-  # fileSystems = {
-  #   "/boot" = {
-  #     device = "/dev/disk/by-label/NIXOS_SD";
-  #     fsType = "btrfs";
-  #     options = [ "noatime" "ssd_spread" "autodefrag" "subvol=@boot" ];
-  #   };
-  #   "/" = {
-  #     device = "/dev/disk/by-label/NIXOS_SD";
-  #     fsType = "btrfs";
-  #     options = [ "noatime" "ssd_spread" "compress-force=zstd" "autodefrag" "subvol=@" ];
-  #   };
-  #   "/var" = {
-  #     device = "/dev/disk/by-label/NIXOS_SD";
-  #     fsType = "btrfs";
-  #     options = [ "noatime" "ssd_spread" "compress-force=zstd" "autodefrag" "subvol=@var" ];
-  #     # https://mt-caret.github.io/blog/posts/2020-06-29-optin-state.html
-  #     neededForBoot = true;
-  #   };
-  #   "/home" = {
-  #     device = "/dev/disk/by-label/NIXOS_SD";
-  #     fsType = "btrfs";
-  #     options = [ "noatime" "ssd_spread" "compress-force=zstd" "autodefrag" "subvol=@home" ];
-  #   };
-  #   "/nix" = {
-  #     device = "/dev/disk/by-label/NIXOS_SD";
-  #     fsType = "btrfs";
-  #     options = [ "noatime" "ssd_spread" "compress-force=zstd" "autodefrag" "subvol=@nix" ];
-  #   };
-  #   "/swap" = {
-  #     device = "/dev/disk/by-label/NIXOS_SD";
-  #     fsType = "btrfs";
-  #     options = [ "noatime" "ssd_spread" "compress-force=zstd" "autodefrag" "subvol=@swap" ];
-  #   };
-  #   "/.snapshots" = {
-  #     device = "/dev/disk/by-label/NIXOS_SD";
-  #     fsType = "btrfs";
-  #     options = [ "noatime" "ssd_spread" "compress-force=zstd" "autodefrag" "subvol=@snapshots" ];
-  #   };
-  # };
 
   networking = {
+    firewall.enable = false;
     hostName = "nixpi";
     wireless = {
       enable = true;
-      interfaces = [ "wlan0" ];
-    };
-    interfaces = {
-      wlan0.useDHCP = true;
-      eth0.useDHCP = true;
     };
   };
 
   services = {
+    timesyncd.enable = true;
     avahi = {
       enable = true;
-      nssmdns = true;
-      publish.enable = true;
+      publish = {
+        enable = true;
+        addresses = true;
+      };
     };
     openssh = {
       enable = true;
@@ -112,7 +77,7 @@
       neovim
     ];
     variables = {
-      EDITOR = "vim";
+      EDITOR = "nvim";
     };
   };
 
