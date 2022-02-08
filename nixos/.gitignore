@@ -1,0 +1,4 @@
+*
+!.gitignore
+!configuration-sample.nix
+!inputrc.nix
