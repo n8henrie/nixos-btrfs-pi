@@ -239,7 +239,7 @@ in
         set -euo pipefail
         set -x
         # Figure out device names for the boot device and root filesystem.
-        rootPart=$(${pkgs.util-linux}/bin/findmnt -n -o SOURCE /)
+        rootPart=$(${pkgs.util-linux}/bin/findmnt -nvo SOURCE /)
         firmwareDevice=$(lsblk -npo PKNAME $rootPart)
         partNum=$(lsblk -npo MAJ:MIN $rootPart | ${pkgs.gawk}/bin/awk -F: '{print $2}')
 
