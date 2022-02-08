@@ -53,7 +53,7 @@ pkgs.stdenv.mkDerivation {
       touch $img
       mkfs.btrfs -L ${volumeLabel} -U ${uuid} -r ./rootImage --shrink $img
 
-      if ! fsck.btrfs $img; then
+      if ! btrfs check $img; then
         echo "--- Fsck failed for BTRFS image ---"
         return 1
       fi
