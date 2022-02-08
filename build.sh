@@ -43,7 +43,7 @@ main() {
   fi
   qemu-img resize -f raw "${img}" "${newsz}"
 
-  if [[ -n "${CUSTOMIZE_NIX_IMAGE}" ]]; then
+  if [[ -n "${CUSTOMIZE_NIX_IMAGE:=""}" ]]; then
     sudo ./customize-image.sh "${img}"
   fi
 
