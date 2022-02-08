@@ -1,7 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# build.sh: Runs `nix build`, makes a user-owned copy of the image, resizes
+# image, runs `nixos.sh`
 
 set -Eeuf -o pipefail
 set -x
+
+loopdev=
+tmpdir=
 
 cleanup() {
   sudo umount -R "${tmpdir}" || true
@@ -16,25 +21,37 @@ main() {
     --argstr system aarch64-linux \
     --file '<nixpkgs/nixos>' \
     --show-trace \
+    -v \
     config.system.build.sdImage
 
-  local result
+  local result img
   result=${1:-./result/sd-image/nixos-btrfs.img}
-  cp "${result}" ./nixos-btrfs.img
+  img=nixos-btrfs.img
 
-  if [[ ! -r ./u-boot-rpi3.bin ]]; then
-    local tmpdir
-    tmpdir=$(mktemp -d)
-    loopdev=$(sudo losetup --find --partscan --show ./nixos-btrfs.img)
-    sudo mount "${loopdev}p1" "${tmpdir}"
-    cp "${tmpdir}"/u-boot-rpi3.bin .
-    sudo umount -R "${tmpdir}"
-    sudo losetup -d "${loopdev}"
+  cp "${result}" "${img}"
+  chown "${USER}:${USER}" "${img}"
+  chmod 0600 "${img}"
+
+  # Resize to a a size that qemu finds acceptable
+  local sz FOUR_GB
+  FOUR_GB=$(numfmt --from=iec 4G)
+  sz=$(du -b "${img}" | awk '{ print $1 }')
+  if [[ "${sz}" -lt "${FOUR_GB}" ]]; then
+    newsz=4G
+  else
+    newsz=8G
+  fi
+  qemu-img resize -f raw "${img}" "${newsz}"
+
+  if [[ -n "${CUSTOMIZE_NIX_IMAGE}" ]]; then
+    sudo ./customize-image.sh "${img}"
   fi
 
-  chown n8henrie:n8henrie ./nixos-btrfs.img
-  chmod 0600 ./nixos-btrfs.img
-  qemu-img resize -f raw ./nixos-btrfs.img 4G
-  ./nixos.sh
+  if [[ ! -r ./u-boot-rpi3.bin ]]; then
+    sudo ./copy-kernel.sh "${img}"
+  fi
+
+  ./nixos.sh "${img}"
+
 }
 main "$@"
