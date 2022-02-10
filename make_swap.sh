@@ -11,8 +11,9 @@ main() {
   touch ./swapfile
   chattr +C ./swapfile
   btrfs property set ./swapfile compression none
-  fallocate -l 1G ./swapfile
+  dd if=/dev/zero of=./swapfile bs=1M count=1024 status=progress conv=fsync
   chmod 0600 ./swapfile
   mkswap ./swapfile
+  swapon ./swapfile
 }
 main "$@"
