@@ -2,25 +2,7 @@
 {
   imports = [
     ./sd-image-btrfs.nix
-  ];
-
-  boot = {
-    kernelParams = [ "console=tty1" "console=ttyAMA0" "console=ttyS0,1115200" "root=LABEL=NIXOS_SD" "rootfstype=btrfs" ];
-    initrd.availableKernelModules = [ "btrfs" "usbhid" ];
-    loader = {
-      grub.enable = false;
-      generic-extlinux-compatible.enable = true;
-    };
-  };
-
-  nixpkgs.overlays = [
-    (self: super: {
-      ubootRaspberryPi3_64bit = super.ubootRaspberryPi3_64bit.overrideAttrs (oldAttrs: {
-        extraConfig = ''
-          CONFIG_CMD_BTRFS=y
-        '';
-      });
-    })
+    ./nixos/hardware.nix
   ];
 
   sdImage = {
@@ -31,18 +13,6 @@
     imageName = "nixos-btrfs.img";
   };
   hardware.enableRedistributableFirmware = true;
-
-  fileSystems = {
-    "/" = {
-      device = "/dev/disk/by-label/NIXOS_SD";
-      fsType = "btrfs";
-      options = [ "noatime" "ssd_spread" "compress-force=zstd" "autodefrag" ];
-    };
-    "/firmware" = {
-      device = "/dev/disk/by-label/FIRMWARE";
-      fsType = "vfat";
-    };
-  };
 
   networking = {
     firewall.enable = false;
