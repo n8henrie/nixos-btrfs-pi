@@ -16,6 +16,7 @@ cleanup() {
 trap cleanup INT TERM ERR
 
 main() {
+  [[ -r ./config.env ]] && source ./config.env
   nix build \
     --include nixos-config=./sd-image.nix \
     --argstr system aarch64-linux \
