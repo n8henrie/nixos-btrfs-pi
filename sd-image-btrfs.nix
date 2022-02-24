@@ -26,10 +26,6 @@ let
   });
 in
 {
-  imports = [
-    <nixpkgs/nixos/modules/profiles/all-hardware.nix>
-  ];
-
   options.sdImage = {
     imageName = mkOption {
       default = "${config.sdImage.imageBaseName}-${config.system.nixos.label}-${pkgs.stdenv.hostPlatform.system}.img";

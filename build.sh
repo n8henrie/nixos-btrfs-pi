@@ -22,7 +22,6 @@ main() {
     --argstr system aarch64-linux \
     --file '<nixpkgs/nixos>' \
     --show-trace \
-    -v \
     config.system.build.sdImage
 
   local result img

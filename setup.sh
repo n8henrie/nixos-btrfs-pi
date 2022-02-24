@@ -21,12 +21,13 @@ make_swap() {
 
 install() {
   nix-channel --update
-  nixos-install --root /
+  nixos-install --root / --no-root-passwd
 }
 
 main() {
   make_swap
   install
+  reboot
 }
 
 main "$@"

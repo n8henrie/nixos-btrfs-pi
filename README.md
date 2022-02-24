@@ -38,31 +38,42 @@ If it boots, your next steps will be setting up your installation.
 
 - I prefer to use a `@` root subvolume with several other subvolumes (which
   help avoid shenanigans with snapshots taking up all available space)
+    - To customize your subvolume setup you'll likely need to make some changes
+      in `nixos/hardware-configuration.nix`:
+        - `filesystems`
+        - `kernelParams` (specifically `rootflags=subvol=@`)
 - To save me a lot of effort in setting up my subvolumes across the dozens of
-  times I re-ran this script, I added `customize-image.sh`, which will run if
-  you `export CUSTOMIZE_NIX_IMAGE=1`; you'll have to look through to see what
-  it does exactly, to hopefully give you some ideas
-- This can be set up in nix (e.g. in `boot.postBootCommands` in
+  times I re-ran this script, I added `customize-image.sh`, which will run
+  during `build.sh` if you `export CUSTOMIZE_NIX_IMAGE=1`; you'll have to look
+  through to see what it does exactly, to hopefully give you some ideas
+- A lot of this can be set up in nix (e.g. in `boot.postBootCommands` in
   `sd-image-btrfs.nix`), but I didn't want to make my preferences default for
   others that might find this useful
 - `customize_image.sh` also:
-    - copies over some utility scripts for post-boot:
-        - `mountsubvols.sh`, which mounts my subvolumes to `/mnt`
-        - `make_swap.sh`, since certain builds die OOM without swap, and swap
-          on BTRFS requires some special configuration
+    - copies over some utility scripts for post-boot, more info on them below:
+        - `mountsubvols.sh`
+        - `setup.sh`
     - copies over my config from `./nixos` to the SD card's `/mnt/etc/nixos`
     - copies over my SSH public key
 - This makes it fairly simple for me to burn the image, boot, ssh in, and then:
 
 ```console
+# ./setup.sh
+```
+
+Without using my setup script, it would look something like this:
+
+```console
+# echo "Make swapfile -- see setup.sh, you're on your own here"
 # nix-channel --update
-# ./mountsubvols.sh
-# ./make_swap.sh
-# nixos-install
-# cp -r /mnt/boot/* /firmware # <- hoping to eliminate this part
+# nixos-install --root /
 # reboot
+
+Obviously on the next boot one would want to:
+
+```console
 # nixos-rebuild switch
-# nixos-rebuild switch --upgrade-all
+# nixos-rebuild switch --upgrade
 ```
 
 ## WIP / Known issues / Notes
@@ -107,7 +118,16 @@ boot
 At this point it goes into a boot loop where it *looks* like it's going to
 work, but not quite.
 
-### BTRFS-related errors
+**UPDATE 20220217**: I have subvolumes and booting from root subvolume working,
+had to modify uboot's `boot_prefixes`
+
+Currently it is *not* working if:
+- `/boot` is compressed (see `customize-image.sh` and
+  `hardware-configuration.nix`)
+
+<!-- **UPDATE 20220224:** I have it working with all subvolumes compressed, had to compile u-boot with `CONFIG_ZSTD=y` -->
+
+### [BTRFS related](BTRFS-related) errors
 
 Including but not limited to:
 
@@ -168,8 +188,9 @@ boot
 - `dtbs/download.sh`: Not currently functional
 - `customize-image.sh`: Self explanatory, creates subvolumes and copies other
   scripts to the image
-- `make_swap.sh`: Copied to the SD image to make modifications easier
-- `mountsubvols.sh`: Copied to the SD image to make modifications easier
+- `setup.sh`: a convenience script to make swapfile (since certain builds die
+  OOM without swap, and swap on BTRFS requires some special configuration),
+  update nix-channel, nixos-install, and reboot all in one go
 
 NB: I've given myself `NOPASSWD` permissions to run the following so that I can
 fire and forget `./build.sh`:
@@ -193,4 +214,3 @@ included a similarly permissive license
 ## Learning Resources
 
 - https://github.com/lucernae/nixos-pi/blob/main/README.md
--

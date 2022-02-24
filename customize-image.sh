@@ -24,7 +24,7 @@ main() {
 
   btrfs device scan --forget
 
-  mount -t btrfs "${part}" "${tmpmount}"
+  mount -t btrfs -o compress-force=zstd,ssd_spread "${part}" "${tmpmount}"
   btrfs filesystem resize max "${tmpmount}"
 
   local subvols dest
@@ -41,29 +41,30 @@ main() {
   mv "${tmpmount}/nix-path-registration" "${tmpmount}/@/"
   umount --recursive "${tmpmount}"
 
-  for sv in @ @home @nix @var; do
+  # mount with compression
+  for sv in @ @boot @home @nix @var; do
     dest="${tmpmount}/${sv#@}"
     mkdir -p "${dest}"
     mount -t btrfs -o compress-force=zstd,ssd_spread,subvol="${sv}" "${part}" "${dest}"
   done
 
+  # name doesn't match name of subvolume
+  mkdir -p "${tmpmount}/.snapshots"
+  mount -t btrfs -o compress-force=zstd,ssd_spread,subvol=@snapshots "${part}" "${tmpmount}/.snapshots"
+
   # no compression for these
-  for sv in @boot @swap; do
+  for sv in @swap; do
     dest="${tmpmount}/${sv#@}"
     mkdir -p "${dest}"
-    mount -o ssd_spread,subvol="${sv}" "${part}" "${dest}"
+    mount -t btrfs -o ssd_spread,subvol="${sv}" "${part}" "${dest}"
   done
-
-  # name doesn't match subvol name
-  mkdir -p "${tmpmount}/.snapshots"
-  mount -o compress-force=zstd,ssd_spread,subvol=@snapshots "${part}" "${tmpmount}/.snapshots"
 
   mkdir -p \
     "${tmpmount}/etc/nixos" \
     "${tmpmount}/root/.ssh"
 
   cp /home/n8henrie/git/sd_shrink/nixpi_id_rsa.pub "${tmpmount}/root/.ssh/authorized_keys"
-  cp ./mountsubvols.sh ./make_swap.sh "${tmpmount}/root/"
+  cp ./mountsubvols.sh ./setup.sh "${tmpmount}/root/"
   find ./nixos -type f -name '*.nix' -not -name '*-sample.nix' -exec cp -t "${tmpmount}/etc/nixos/" {} +
 }
 main "$@"

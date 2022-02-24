@@ -2,7 +2,7 @@
 {
   imports = [
     ./sd-image-btrfs.nix
-    ./nixos/hardware.nix
+    ./nixos/hardware-configuration.nix
   ];
 
   sdImage = {
@@ -12,7 +12,6 @@
     compressImage = false;
     imageName = "nixos-btrfs.img";
   };
-  hardware.enableRedistributableFirmware = true;
 
   networking = {
     firewall.enable = false;
