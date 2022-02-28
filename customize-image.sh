@@ -67,7 +67,7 @@ main() {
     "${tmpmount}/root/.ssh"
 
   cp /home/n8henrie/git/sd_shrink/nixpi_id_rsa.pub "${tmpmount}/root/.ssh/authorized_keys"
-  cp ./mountsubvols.sh ./setup.sh "${tmpmount}/root/"
+  cp ./setup.sh "${tmpmount}/root/"
   find ./nixos -type f -name '*.nix' -not -name '*-sample.nix' -exec cp -t "${tmpmount}/etc/nixos/" {} +
 }
 main "$@"
