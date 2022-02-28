@@ -7,6 +7,12 @@ make_swap() {
   umount -R /mnt/swap || true
   mkdir -p /mnt/swap
   mount -o subvol=@swap /dev/mmcblk0p2 /mnt/swap
+
+  [[ -e /mnt/swap/swapfile ]] && {
+    umount -R /mnt/swap
+    return
+  }
+
   pushd /mnt/swap
   touch ./swapfile
   chattr +C ./swapfile
