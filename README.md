@@ -78,6 +78,17 @@ Obviously on the next boot one would want to:
 
 ## WIP / Known issues / Notes
 
+This seems handy. Still trying to figure out how to inspect the value of
+`fileSystems` and whether I'm setting it correctly.
+
+```console
+$ nix show-derivation \
+    --include nixos-config=sd-image.nix \
+    --argstr system aarch64-linux \
+    --file '<nixpkgs/nixos>' \
+    config.system.build.sdImage
+```
+
 #### BTRFS dup
 
 One of the reasons I like BTRFS on an RPi is the ability to set dup data on an
