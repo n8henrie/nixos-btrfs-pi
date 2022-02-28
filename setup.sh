@@ -27,7 +27,11 @@ make_swap() {
 
 install() {
   nix-channel --update
-  nixos-install --root / --no-root-passwd
+  nixos-install \
+    --root / \
+    --no-root-passwd \
+    --max-jobs "$(nproc)" \
+    --no-bootloader
 }
 
 main() {
