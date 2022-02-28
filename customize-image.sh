@@ -45,13 +45,14 @@ main() {
   local compsubvs=(@ @home @nix @snapshots @var)
   for sv in "${compsubvs[@]}"; do
     dest="${tmpmount}/${sv#@}"
+
+    if [[ "${sv}" = "@snapshots" ]]; then
+      dest="${tmpmount}/.snapshots"
+    fi
+
     mkdir -p "${dest}"
     mount -t btrfs -o compress-force=zstd,ssd_spread,subvol="${sv}" "${part}" "${dest}"
   done
-
-  # name doesn't match name of subvolume
-  mkdir -p "${tmpmount}/.snapshots"
-  mount -t btrfs -o compress-force=zstd,ssd_spread,subvol=@snapshots "${part}" "${tmpmount}/.snapshots"
 
   # no compression for these
   local nocompsubvs=(@boot @swap)
