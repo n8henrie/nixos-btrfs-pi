@@ -7,7 +7,6 @@
 
   boot = {
     kernelParams = [ "console=tty1" "console=ttyAMA0" "console=ttyS0,1115200" "root=LABEL=NIXOS_SD" "rootfstype=btrfs" "rootflags=subvol=@" ];
-    initrd.availableKernelModules = [ "btrfs" "usbhid" ];
     loader = {
       grub.enable = false;
       generic-extlinux-compatible = {

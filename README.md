@@ -89,6 +89,40 @@ $ nix show-derivation \
     config.system.build.sdImage
 ```
 
+**UPDATE 20220301:** Finally figured out how to debug a value:
+
+
+```console
+$ nix repl \
+    --include nixos-config=./sd-image.nix \
+    --argstr system aarch64-linux
+    '<nixpkgs/nixos>'
+nix-repl> :p config.fileSystems
+```
+
+Or even better:
+
+```console
+$ nix eval \
+    --include nixos-config=./sd-image.nix \
+    --argstr system aarch64-linux \
+    --file '<nixpkgs/nixos>' \
+    config.fileSystems
+```
+
+With color and formatting in a pager:
+
+```console
+$ nix eval \
+    --include nixos-config=./sd-image.nix \
+    --argstr system aarch64-linux \
+    --file '<nixpkgs/nixos>' \
+    config.fileSystems \
+    --json |
+    jq --color-output |
+    bat
+```
+
 #### BTRFS dup
 
 One of the reasons I like BTRFS on an RPi is the ability to set dup data on an
