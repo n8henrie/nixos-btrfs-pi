@@ -31,8 +31,7 @@ install() {
   nixos-install \
     --root / \
     --no-root-passwd \
-    --max-jobs "$(nproc)" \
-    --no-bootloader
+    --max-jobs "$(nproc)"
 }
 
 main() {
