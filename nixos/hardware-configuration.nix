@@ -38,47 +38,47 @@
     firmware = [ pkgs.firmwareLinuxNonfree ];
   };
 
-  fileSystems = {
-    "/" = {
-      device = "/dev/disk/by-label/NIXOS_SD";
+
+  fileSystems =
+    let
+      opts = [ "noatime" "ssd_spread" "discard=async" ];
       fsType = "btrfs";
-      options = [ "noatime" "ssd_spread" "compress-force=zstd" "discard=async" "subvol=@" ];
-    };
-    "/boot" = {
       device = "/dev/disk/by-label/NIXOS_SD";
-      fsType = "btrfs";
-      options = [ "noatime" "ssd_spread" "compress-force=zstd" "discard=async" "subvol=@boot" ];
+    in
+    {
+      "/" = {
+        inherit fsType device;
+        options = opts ++ [ "compress-force=zstd" "subvol=@" ];
+      };
+      "/boot" = {
+        inherit fsType device;
+        options = opts ++ [ "subvol=@boot" ];
+      };
+      "/nix" = {
+        inherit fsType device;
+        options = opts ++ [ "compress-force=zstd" "subvol=@nix" ];
+      };
+      "/var" = {
+        inherit fsType device;
+        options = opts ++ [ "compress-force=zstd" "subvol=@var" ];
+      };
+      "/home" = {
+        inherit fsType device;
+        options = opts ++ [ "compress-force=zstd" "subvol=@home" ];
+      };
+      "/swap" = {
+        inherit fsType device;
+        options = opts ++ [ "subvol=@swap" ];
+      };
+      "/.snapshots" = {
+        inherit fsType device;
+        options = opts ++ [ "compress-force=zstd" "subvol=@snapshots" ];
+      };
+      "/firmware" = {
+        device = "/dev/disk/by-label/FIRMWARE";
+        fsType = "vfat";
+      };
     };
-    "/nix" = {
-      device = "/dev/disk/by-label/NIXOS_SD";
-      fsType = "btrfs";
-      options = [ "noatime" "ssd_spread" "compress-force=zstd" "discard=async" "subvol=@nix" ];
-    };
-    "/var" = {
-      device = "/dev/disk/by-label/NIXOS_SD";
-      fsType = "btrfs";
-      options = [ "noatime" "ssd_spread" "compress-force=zstd" "discard=async" "subvol=@var" ];
-    };
-    "/home" = {
-      device = "/dev/disk/by-label/NIXOS_SD";
-      fsType = "btrfs";
-      options = [ "noatime" "ssd_spread" "compress-force=zstd" "discard=async" "subvol=@home" ];
-    };
-    "/swap" = {
-      device = "/dev/disk/by-label/NIXOS_SD";
-      fsType = "btrfs";
-      options = [ "noatime" "ssd_spread" "discard=async" "subvol=@swap" ];
-    };
-    "/.snapshots" = {
-      device = "/dev/disk/by-label/NIXOS_SD";
-      fsType = "btrfs";
-      options = [ "noatime" "ssd_spread" "compress-force=zstd" "discard=async" "subvol=@snapshots" ];
-    };
-    "/firmware" = {
-      device = "/dev/disk/by-label/FIRMWARE";
-      fsType = "vfat";
-    };
-  };
 
   # The global useDHCP flag is deprecated, therefore explicitly set to false here.
   # Per-interface useDHCP will be mandatory in the future, so this generated config
