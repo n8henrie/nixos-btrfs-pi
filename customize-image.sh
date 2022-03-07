@@ -52,6 +52,7 @@ main() {
 
     mkdir -p "${dest}"
     mount -t btrfs -o compress-force=zstd,ssd_spread,subvol="${sv}" "${part}" "${dest}"
+    # btrfs filesystem defrag -r -czstd "${dest}"
   done
 
   # no compression for these
