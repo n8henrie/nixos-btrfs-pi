@@ -8,6 +8,7 @@
   boot = {
     kernelParams = [ "console=tty1" "console=ttyAMA0" "console=ttyS0,1115200" "root=LABEL=NIXOS_SD" "rootfstype=btrfs" "rootflags=subvol=@" ];
     loader = {
+      generationsDir.copyKernels = true;
       grub.enable = false;
       generic-extlinux-compatible = {
         enable = true;
