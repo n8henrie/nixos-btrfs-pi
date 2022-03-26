@@ -68,6 +68,7 @@ Without using my setup script, it would look something like this:
 # nix-channel --update
 # nixos-install --root /
 # reboot
+```
 
 Obviously on the next boot one would want to:
 
