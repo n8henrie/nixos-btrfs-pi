@@ -197,7 +197,7 @@ in
               label: dos
               label-id: ${config.sdImage.firmwarePartitionID}
 
-              start=''${gap}M, size=$firmwareSizeBlocks, type=b, bootable
+              start=''${gap}M, size=$firmwareSizeBlocks, type=b
               start=$((gap + ${toString config.sdImage.firmwareSize}))M, type=83, bootable
           EOF
 
