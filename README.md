@@ -79,6 +79,8 @@ Obviously on the next boot one would want to:
 
 ## WIP / Known issues / Notes
 
+### Debugging
+
 This seems handy. Still trying to figure out how to inspect the value of
 `fileSystems` and whether I'm setting it correctly.
 
@@ -171,7 +173,14 @@ Currently it is *not* working if:
 - `/boot` is compressed (see `customize-image.sh` and
   `hardware-configuration.nix`)
 
-<!-- **UPDATE 20220224:** I have it working with all subvolumes compressed, had to compile u-boot with `CONFIG_ZSTD=y` -->
+### With compression *disabled* on these 3 subvols, all is well:
+
+- `@` (root)
+- `@boot`
+- `@nix`
+
+Doesn't seem to work with any of those compressed, even using u-boot's
+`CONFIG_ZSTD=y`.
 
 ### [BTRFS related](BTRFS-related) errors
 
