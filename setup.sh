@@ -5,16 +5,16 @@ set -x
 
 make_swap() {
   local swapfile=/mnt/swap/swapfile
+
+  [[ -e "${swapfile}" ]] && {
+    swapon "${swapfile}" || return 0
+    umount -R /mnt/swap
+    return 0
+  }
+
   umount -R /mnt/swap || true
   mkdir -p /mnt/swap
   mount -o subvol=@swap /dev/mmcblk0p2 /mnt/swap
-
-  [[ -e "${swapfile}" ]] && {
-    swapon "${swapfile}"
-    umount -R /mnt/swap
-    return
-  }
-
   pushd /mnt/swap
   touch "${swapfile}"
   chattr +C "${swapfile}"
