@@ -24,7 +24,7 @@ main() {
 
   btrfs device scan --forget
 
-  mount -t btrfs -o compress-force=zstd,ssd_spread "${part}" "${tmpmount}"
+  mount -t btrfs -o ssd_spread,space_cache=v2 "${part}" "${tmpmount}"
   btrfs filesystem resize max "${tmpmount}"
 
   local subvols dest
