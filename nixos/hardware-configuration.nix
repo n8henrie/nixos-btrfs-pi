@@ -93,5 +93,6 @@
     interfaces.eth0.useDHCP = lib.mkDefault true;
   };
 
-  powerManagement.cpuFreqGovernor = lib.mkDefault "ondemand";
+  powerManagement.cpuFreqGovernor = lib.mkDefault
+    "ondemand";
 }
