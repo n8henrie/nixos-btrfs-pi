@@ -42,7 +42,7 @@ main() {
   umount --recursive "${tmpmount}"
 
   # mount with compression
-  local compsubvs=(@ @home @nix @snapshots @var)
+  local compsubvs=(@ @boot @home @nix @snapshots @var)
   for sv in "${compsubvs[@]}"; do
     dest="${tmpmount}/${sv#@}"
 
@@ -51,12 +51,12 @@ main() {
     fi
 
     mkdir -p "${dest}"
-    mount -t btrfs -o compress-force=zstd,ssd_spread,subvol="${sv}" "${part}" "${dest}"
+    mount -t btrfs -o ssd_spread,subvol="${sv}" "${part}" "${dest}"
     # btrfs filesystem defrag -r -czstd "${dest}"
   done
 
   # no compression for these
-  local nocompsubvs=(@boot @swap)
+  local nocompsubvs=(@swap)
   for sv in "${nocompsubvs[@]}"; do
     dest="${tmpmount}/${sv#@}"
     mkdir -p "${dest}"
