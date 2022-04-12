@@ -40,14 +40,14 @@
 
   fileSystems =
     let
-      opts = [ "noatime" "ssd_spread" "discard=async" ];
+      opts = [ "noatime" "ssd_spread" "autodefrag" "discard=async" "compress-force=zstd" ];
       fsType = "btrfs";
       device = "/dev/disk/by-label/NIXOS_SD";
     in
     {
       "/" = {
         inherit fsType device;
-        options = opts ++ [ "compress-force=zstd" "subvol=@" ];
+        options = opts ++ [ "subvol=@" ];
       };
       "/boot" = {
         inherit fsType device;
@@ -55,15 +55,15 @@
       };
       "/nix" = {
         inherit fsType device;
-        options = opts ++ [ "compress-force=zstd" "subvol=@nix" ];
+        options = opts ++ [ "subvol=@nix" ];
       };
       "/var" = {
         inherit fsType device;
-        options = opts ++ [ "compress-force=zstd" "subvol=@var" ];
+        options = opts ++ [ "subvol=@var" ];
       };
       "/home" = {
         inherit fsType device;
-        options = opts ++ [ "compress-force=zstd" "subvol=@home" ];
+        options = opts ++ [ "subvol=@home" ];
       };
       "/swap" = {
         inherit fsType device;
@@ -71,7 +71,7 @@
       };
       "/.snapshots" = {
         inherit fsType device;
-        options = opts ++ [ "compress-force=zstd" "subvol=@snapshots" ];
+        options = opts ++ [ "subvol=@snapshots" ];
       };
       "/firmware" = {
         device = "/dev/disk/by-label/FIRMWARE";
