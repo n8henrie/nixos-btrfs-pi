@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, modulesPath, ... }:
 {
   imports = [
     ./sd-image-btrfs.nix
@@ -6,7 +6,7 @@
   ];
 
   sdImage = {
-    inherit ((import <nixpkgs/nixos/modules/installer/sd-card/sd-image-aarch64.nix> {
+    inherit ((import (modulesPath + "/installer/sd-card/sd-image-aarch64.nix") {
       inherit config lib pkgs;
     }).sdImage) populateRootCommands populateFirmwareCommands;
     compressImage = false;
