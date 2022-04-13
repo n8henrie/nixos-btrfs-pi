@@ -44,6 +44,7 @@
       wget
       tmux
       neovim
+      libraspberrypi
     ];
     variables = {
       EDITOR = "nvim";
