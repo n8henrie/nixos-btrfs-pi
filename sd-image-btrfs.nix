@@ -182,10 +182,24 @@ in
           # Gap in front of the first partition, in MiB
           gap=${toString config.sdImage.firmwarePartitionOffset}
 
+          # Swap partition size, in MiB
+          swapSize=1024
+          swapSizeBlocks=$(( $swapSize * 1024 * 1024 / 512 ))
+
           # Create the image file sized to fit /firmware and /, plus slack for the gap.
           rootSizeBlocks=$(du -B 512 --apparent-size ./root-fs.img | awk '{ print $1 }')
-          firmwareSizeBlocks=$((${toString config.sdImage.firmwareSize} * 1024 * 1024 / 512))
-          imageSize=$((rootSizeBlocks * 512 + firmwareSizeBlocks * 512 + gap * 1024 * 1024))
+
+          firmwareSize=${toString config.sdImage.firmwareSize}
+          firmwareSizeBlocks=$(( $firmwareSize * 1024 * 1024 / 512 ))
+
+          # /boot ~80M, /nix ~1.9G, give some extra space for copying
+          imageSize=$((
+            firmwareSizeBlocks * 512 +
+            gap * 1024 * 1024 +
+            rootSizeBlocks * 512 +
+            swapSize * 1024 * 1024 +
+            1 * 1024 * 1024 * 1024
+          ))
           truncate -s $imageSize $img
 
           # type=b is 'W95 FAT32', type=83 is 'Linux'.
@@ -198,12 +212,9 @@ in
               label-id: ${config.sdImage.firmwarePartitionID}
 
               start=''${gap}M, size=$firmwareSizeBlocks, type=b
-              start=$((gap + ${toString config.sdImage.firmwareSize}))M, type=83, bootable
+              start=$(( $gap + $firmwareSize ))M, size=$swapSizeBlocks, type=82
+              start=$(( $gap + $firmwareSize + $swapSize ))M, type=83, bootable
           EOF
-
-          # Copy the rootfs into the SD image
-          eval $(partx $img -o START,SECTORS --nr 2 --pairs)
-          dd conv=notrunc if=./root-fs.img of=$img seek=$START count=$SECTORS
 
           # Create a FAT32 /firmware partition of suitable size into boot_part.img
           eval $(partx $img -o START,SECTORS --nr 1 --pairs)
@@ -219,6 +230,17 @@ in
           # Verify the FAT partition before copying it.
           fsck.vfat -vn boot_part.img
           dd conv=notrunc if=boot_part.img of=$img seek=$START count=$SECTORS
+
+          # Create the swap partition
+          eval $(partx $img -o START,SECTORS --nr 2 --pairs)
+          truncate -s $(( $swapSizeBlocks * 512)) swap_part.img
+          chmod 0600 swap_part.img
+          faketime "1970-01-01 00:00:00" mkswap --label SWAP swap_part.img
+          dd conv=notrunc if=./swap_part.img of=$img seek=$START count=$SECTORS
+
+          # Copy the rootfs into the SD image
+          eval $(partx $img -o START,SECTORS --nr 3 --pairs)
+          dd conv=notrunc if=./root-fs.img of=$img seek=$START count=$SECTORS
 
           ${config.sdImage.postBuildCommands}
 

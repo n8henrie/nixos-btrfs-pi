@@ -182,6 +182,13 @@ Currently it is *not* working if:
 Doesn't seem to work with any of those compressed, even using u-boot's
 `CONFIG_ZSTD=y`.
 
+## UPDATE 20220609: With the latest push, BTRFS seems to be working with root
+subvolume and compression, including `@boot`. The key seems to have been:
+- pinning to `nixos-22.05` (now released)
+- pinning to the 5.18 kernel
+
+I'll go through this README for more updates soon.
+
 ### [BTRFS related](BTRFS-related) errors
 
 Including but not limited to:
@@ -269,3 +276,37 @@ included a similarly permissive license
 ## Learning Resources
 
 - https://github.com/lucernae/nixos-pi/blob/main/README.md
+
+### Scratchpad
+
+```console
+$ nix build \
+    --dry-run \
+    --file '<nixpkgs>' \
+    --argstr defconfig rpi_3_defconfig \
+    --arg extraMeta.platforms '["aarch64-linux"]' \
+    --arg filesToInstall '["u-boot.bin"]' \
+    --argstr extraConfig '
+        CONFIG_CMD_BTRFS=y
+        CONFIG_ZSTD=y
+        CONFIG_BOOTCOMMAND="setenv boot_prefixes / /boot/ /@/ /@boot/; run distro_bootcmd;"
+        ' \
+    pkgsCross.aarch64-multiplatform.buildUBoot
+```
+
+
+```console
+$ nix build \
+    --file '<nixpkgs>' pkgsCross.aarch64-multiplatform.buildUBoot \
+    --argstr defconfig rpi_3_defconfig \
+    --arg filesToInstall '["u-boot.bin"]' \
+    --arg extraMeta.platforms '["aarch64-linux"]' \
+    --argstr extraConfig '
+CONFIG_CMD_BTRFS=y
+CONFIG_ZSTD=y
+CONFIG_BOOTCOMMAND="setenv boot_prefixes / /boot/ /@/ /@boot/; run distro_bootcmd;"
+'
+$ grep -ci BTRFS result/u-boot.bin
+80
+$ # adding CONFIG_FS_BTRFS results in an idental u-boot.bin
+```

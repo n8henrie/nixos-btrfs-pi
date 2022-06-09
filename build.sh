@@ -9,20 +9,15 @@ loopdev=
 tmpdir=
 
 cleanup() {
-  sudo umount -R "${tmpdir}" || true
-  sudo losetup -d "${loopdev}" || true
+  sudo -n umount -R "${tmpdir}" || true
+  sudo -n losetup -d "${loopdev}" || true
 }
 
 trap cleanup INT TERM ERR
 
-main() {
+user_main() {
   [[ -r ./config.env ]] && source ./config.env
-  nix build \
-    --include nixos-config=./sd-image.nix \
-    --argstr system aarch64-linux \
-    --file '<nixpkgs/nixos>' \
-    --show-trace \
-    config.system.build.sdImage
+  nix build
 
   local result img
   result=${1:-./result/sd-image/nixos-btrfs.img}
@@ -33,15 +28,17 @@ main() {
   chmod 0600 "${img}"
 
   # Resize to a a size that qemu finds acceptable
-  local sz FOUR_GB
-  FOUR_GB=$(numfmt --from=iec 4G)
-  sz=$(du -b "${img}" | awk '{ print $1 }')
-  if [[ "${sz}" -lt "${FOUR_GB}" ]]; then
-    newsz=4G
-  else
-    newsz=8G
+  if [[ -z "${NO_RESIZE:-}" ]]; then
+    local sz FOUR_GB
+    FOUR_GB=$(numfmt --from=iec 4G)
+    sz=$(du -b "${img}" | awk '{ print $1 }')
+    if [[ "${sz}" -lt "${FOUR_GB}" ]]; then
+      newsz=4G
+    else
+      newsz=8G
+    fi
+    qemu-img resize -f raw "${img}" "${newsz}"
   fi
-  qemu-img resize -f raw "${img}" "${newsz}"
 
   if [[ -n "${CUSTOMIZE_NIX_IMAGE:=""}" ]]; then
     sudo ./customize-image.sh "${img}"
@@ -51,7 +48,25 @@ main() {
     sudo ./copy-kernel.sh "${img}"
   fi
 
-  ./nixos.sh "${img}"
+  # ./nixos.sh "${img}"
+  sudo ./burn.sh
+  noti -m "burn done"
+}
+
+main() {
+  if [[ "${EUID}" -ne 0 ]]; then
+    sudo "$0" "$@"
+    exit $?
+  fi
+
+  export -f user_main
+  sudo -u "${SUDO_USER:-}" bash << EOF
+  set -Eeuf -o pipefail
+  set -x
+  $(declare -f user_main)
+  user_main
+EOF
 
 }
+
 main "$@"

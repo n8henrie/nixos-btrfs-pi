@@ -41,10 +41,11 @@
   environment = {
     systemPackages = with pkgs; [
       git
-      wget
-      tmux
-      neovim
       libraspberrypi
+      neovim
+      tmux
+      wget
+      compsize
     ];
     variables = {
       EDITOR = "nvim";
@@ -52,4 +53,14 @@
   };
 
   i18n.supportedLocales = [ "en_US.UTF-8/UTF-8" ];
+
+  nix = {
+    extraOptions = ''
+      experimental-features = nix-command flakes
+      max-jobs = auto
+      auto-optimise-store = true
+    '';
+  };
+
+  system.stateVersion = "22.05";
 }

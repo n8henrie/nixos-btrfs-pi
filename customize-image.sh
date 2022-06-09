@@ -20,15 +20,15 @@ trap cleanup EXIT
 main() {
   tmpmount=$(mktemp -d)
   loopdev=$(losetup --find --partscan --show ./nixos-btrfs.img)
-  part=${loopdev}p2
+  part=${loopdev}p3
 
   btrfs device scan --forget
 
-  mount -t btrfs -o ssd_spread,space_cache=v2 "${part}" "${tmpmount}"
+  mount -t btrfs -o ssd_spread,space_cache=v2,compress-force=zstd "${part}" "${tmpmount}"
   btrfs filesystem resize max "${tmpmount}"
 
   local subvols dest
-  subvols=(@ @boot @home @nix @snapshots @swap @var)
+  subvols=(@ @boot @home @nix @snapshots @var)
   for sv in "${subvols[@]}"; do
     dest="${tmpmount}/${sv}"
     [[ -d "${dest}" ]] || btrfs subvol create "${dest}"
@@ -39,11 +39,18 @@ main() {
     rm -r "${tmpmount:?}/${dir}"
   done
   mv "${tmpmount}/nix-path-registration" "${tmpmount}/@/"
+
   umount --recursive "${tmpmount}"
 
-  # mount with compression
-  local compsubvs=(@ @boot @home @nix @snapshots @var)
-  for sv in "${compsubvs[@]}"; do
+  local subvs=(
+    @
+    @boot
+    @home
+    @nix
+    @snapshots
+    @var
+  )
+  for sv in "${subvs[@]}"; do
     dest="${tmpmount}/${sv#@}"
 
     if [[ "${sv}" = "@snapshots" ]]; then
@@ -51,16 +58,7 @@ main() {
     fi
 
     mkdir -p "${dest}"
-    mount -t btrfs -o ssd_spread,subvol="${sv}" "${part}" "${dest}"
-    # btrfs filesystem defrag -r -czstd "${dest}"
-  done
-
-  # no compression for these
-  local nocompsubvs=(@swap)
-  for sv in "${nocompsubvs[@]}"; do
-    dest="${tmpmount}/${sv#@}"
-    mkdir -p "${dest}"
-    mount -t btrfs -o ssd_spread,subvol="${sv}" "${part}" "${dest}"
+    mount -t btrfs -o ssd_spread,space_cache=v2,compress-force=zstd,subvol="${sv}" "${part}" "${dest}"
   done
 
   mkdir -p \

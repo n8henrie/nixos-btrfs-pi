@@ -14,13 +14,13 @@ make_swap() {
 
   umount -R /mnt/swap || true
   mkdir -p /mnt/swap
+  chmod 0700 /mnt/swap
   mount -o subvol=@swap /dev/mmcblk0p2 /mnt/swap
   pushd /mnt/swap
   touch "${swapfile}"
-  chattr +C "${swapfile}"
+  chmod 0600 "${swapfile}"
   btrfs property set "${swapfile}" compression none
   dd if=/dev/zero of="${swapfile}" bs=1M count=1024 status=progress conv=fsync
-  chmod 0600 "${swapfile}"
   mkswap "${swapfile}"
   swapon "${swapfile}"
   popd
@@ -35,7 +35,7 @@ install() {
 }
 
 main() {
-  make_swap
+  # make_swap
   install
   reboot
 }
