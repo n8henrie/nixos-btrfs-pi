@@ -26,15 +26,18 @@ main() {
 
   loopdev=$(losetup --find --partscan --show "${img}")
 
-  mkdir -p "${dest}"{1,3}
-  for d in 1 3; do
-    mountpoint "${dest}${d}" && {
+  local parts
+  mapfile -t parts < <(find /dev -name "${loopdev#/dev/}p*")
+
+  for part in "${parts[@]}"; do
+    partnum=${part#"${loopdev}p"}
+    partdest="${dest}${partnum}"
+    mkdir -p "${partdest}"
+    mountpoint "${partdest}" && {
       echo "already mounted!"
       exit 1
     }
+    mount "${part}" "${partdest}" || echo "Unable to mount ${part}"
   done
-
-  mount "${loopdev}p1" "${dest}1"
-  mount "${loopdev}p3" "${dest}3"
 }
 main "$@"
