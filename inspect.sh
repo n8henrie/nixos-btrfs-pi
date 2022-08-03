@@ -6,11 +6,6 @@
 set -Eeuf -o pipefail
 set -x
 
-if [[ "${EUID}" -ne 0 ]]; then
-  sudo bash "$0" "$@"
-  echo $?
-fi
-
 loopdev=
 readonly dest=/tmp/inspect
 
@@ -23,6 +18,10 @@ cleanup() {
 trap cleanup INT TERM ERR
 
 main() {
+  if [[ "${EUID}" -ne 0 ]]; then
+    sudo bash "$0" "$@"
+    exit $?
+  fi
 
   local img
   img=${1:-nixos-btrfs.img}

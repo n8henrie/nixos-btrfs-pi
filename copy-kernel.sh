@@ -16,7 +16,12 @@ cleanup() {
 trap cleanup EXIT
 
 main() {
-  img=$1
+  if [[ "${EUID}" -ne 0 ]]; then
+    sudo "$0" "$@"
+    exit $?
+  fi
+
+  local img=${1:-./nixos-btrfs.img}
   tmpmount=$(mktemp -d)
   loopdev=$(losetup --find --partscan --show "${img}")
 

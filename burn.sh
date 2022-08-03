@@ -7,11 +7,25 @@
 set -Eeuf -o pipefail
 set -x
 
+err() {
+  log "$*"
+  exit 1
+}
+
+log() {
+  printf '%s\n' "$*" > /dev/stderr
+}
+
 main() {
+  if [[ "${EUID}" -ne 0 ]]; then
+    sudo "$0" "$@"
+    exit $?
+  fi
+
   local img outdev
   img=${1:-./nixos-btrfs.img}
   outdev='/dev/disk/by-id/usb-TS-RDF5_SD_Transcend_000000000039-0:0'
-  [[ -b "${outdev}" ]] || exit 1
+  [[ -b "${outdev}" ]] || err "device not found: ${outdev}"
 
   dd \
     if="${img}" \
