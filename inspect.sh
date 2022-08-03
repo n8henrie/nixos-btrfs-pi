@@ -10,9 +10,7 @@ loopdev=
 readonly dest=/tmp/inspect
 
 cleanup() {
-  umount -R "${dest}1" || true
-  umount -R "${dest}3" || true
-
+  umount -R "${dest}?" || true
   [[ -n "${loopdev}" ]] && losetup -d "${loopdev}"
 }
 trap cleanup INT TERM ERR
