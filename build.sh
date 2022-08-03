@@ -17,7 +17,7 @@ trap cleanup INT TERM ERR
 
 user_main() {
   [[ -r ./config.env ]] && source ./config.env
-  nix build
+  nix build --impure
 
   local result img
   result=${1:-./result/sd-image/nixos-btrfs.img}
