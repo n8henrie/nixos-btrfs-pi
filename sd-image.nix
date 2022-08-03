@@ -36,6 +36,17 @@
     };
   };
 
+  systemd.services.autoinstall = {
+    path = [ pkgs.bash pkgs.nix pkgs.nixos-rebuild pkgs.nixos-install-tools ];
+    script = ''
+      [[ -f /root/setup.sh ]] && /root/setup.sh || nixos-rebuild --upgrade --install-bootloader switch
+    '';
+    wantedBy = [ "network-online.target" ];
+    serviceConfig = {
+      Restart = "on-failure";
+    };
+  };
+
   users.users.root.password = "nixos-btrfs";
 
   environment = {

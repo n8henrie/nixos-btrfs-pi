@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Call this at the beginning as it looks for undefined variables that
+# will otherwise cause an error
+source /nix/var/nix/profiles/system/etc/profile
+
 set -Eeuf -o pipefail
 set -x
 
@@ -27,6 +31,7 @@ make_swap() {
 }
 
 install() {
+
   nix-channel --update
   nixos-install \
     --root / \
@@ -37,6 +42,7 @@ install() {
 main() {
   # make_swap
   install
+  rm "$0"
   reboot
 }
 
