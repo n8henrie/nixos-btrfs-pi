@@ -6,7 +6,7 @@
     ];
 
   boot = {
-    kernelParams = [ "console=tty1" "console=ttyAMA0" "console=ttyS0,1115200" "root=LABEL=NIXOS_SD" "rootfstype=btrfs" "rootflags=subvol=@" "rootwait" ];
+    kernelParams = [ "console=tty1" "console=ttyAMA0" "console=ttyS0,115200" "root=LABEL=NIXOS_SD" "rootfstype=btrfs" "rootflags=subvol=@" "rootwait" ];
     initrd.kernelModules = [ "zstd" "btrfs" ];
     kernelPackages = pkgs.linuxPackages_5_18;
     loader = {
