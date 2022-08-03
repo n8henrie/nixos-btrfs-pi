@@ -44,9 +44,7 @@ user_main() {
     sudo ./customize-image.sh "${img}"
   fi
 
-  if [[ ! -r ./u-boot-rpi3.bin ]]; then
-    sudo ./copy-kernel.sh "${img}"
-  fi
+  sudo ./copy-kernel.sh "${img}"
 
   # ./nixos.sh "${img}"
   sudo ./burn.sh
