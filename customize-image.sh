@@ -26,6 +26,7 @@ main() {
 
   mount -t btrfs -o ssd_spread,space_cache=v2,compress-force=zstd "${part}" "${tmpmount}"
   btrfs filesystem resize max "${tmpmount}"
+  # btrfs balance start -dconvert=DUP "${tmpmount}"
 
   local subvols dest
   subvols=(@ @boot @home @nix @snapshots @var)

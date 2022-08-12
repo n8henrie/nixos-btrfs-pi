@@ -1,6 +1,7 @@
 { config, lib, pkgs, modulesPath, ... }:
 {
   imports = [
+    # <nixpkgs/nixos/modules/profiles/qemu-guest.nix>
     ./sd-image-btrfs.nix
     ./nixos/hardware-configuration.nix
   ];
@@ -22,6 +23,7 @@
   };
 
   services = {
+    # qemuGuest.enable = true;
     timesyncd.enable = true;
     avahi = {
       enable = true;

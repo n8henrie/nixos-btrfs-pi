@@ -23,10 +23,15 @@
     };
   };
 
+  # hardware = {
+  #   enableRedistributableFirmware = false;
+  #   firmware = [ pkgs.raspberrypiWirelessFirmware ];
+  # };
+
   nixpkgs.overlays = [
     (self: super: {
       ubootRaspberryPi3_64bit = super.ubootRaspberryPi3_64bit.overrideAttrs (oldAttrs: {
-        defconfig = "rpi_3_b_plus_defconfig";
+        # defconfig = "rpi_3_b_plus_defconfig";
         extraConfig = ''
           CONFIG_CMD_BTRFS=y
           CONFIG_ZSTD=y
@@ -43,7 +48,7 @@
         "ssd_spread"
         "autodefrag"
         "discard=async"
-        "compress-force=zstd"
+        # "compress-force=zstd"
       ];
       fsType = "btrfs";
       device = "/dev/disk/by-label/NIXOS_SD";
