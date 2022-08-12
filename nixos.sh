@@ -12,15 +12,16 @@ main() {
   local img=${1:-./nixos-btrfs.img}
   qemu-system-aarch64 \
     -M raspi3b \
-    -dtb ./dtbs/nixos2205/bcm2837-rpi-3-b-plus.dtb \
-    -drive "format=raw,file=${img}" \
-    -kernel ./u-boot-rpi3.bin \
+    -dtb dtbs/bcm2710-rpi-3-b.dtb \
     -m 1G \
     -smp 4 \
+    -drive "format=raw,file=${img}" \
+    -kernel ./u-boot-rpi3.bin \
+    -usb -device usb-kbd \
     -device usb-net,netdev=net0 \
     -netdev user,id=net0,hostfwd=tcp::2222-:22 \
-    -serial stdio \
-    -no-reboot
+    -append "rw console=ttyS0 root=LABEL=NIXOS_SD rootfstype=btrfs" \
+    -nographic
 }
 
 main "$@"
