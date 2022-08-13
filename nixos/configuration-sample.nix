@@ -15,8 +15,8 @@
     wireless = {
       enable = true;
       networks = {
-        "MyNetwork" = {
-          pskRaw = "put your psk here";
+        "MyWifi" = {
+          pskRaw = "totally Real";
         };
       };
     };
@@ -62,16 +62,16 @@
   };
 
   users = {
-    users.root.password = "nixos-btrfs"; # you should probably change this
-    mutableUsers = false;
-    users.yournamehere = {
-      isNormalUser = true;
-      home = "/home/yournamehere";
-      description = "Your Name";
-      extraGroups = [ "wheel" ];
-      openssh.authorizedKeys.keys = [ "your ssh pubkey here" ];
-      hashedPassword = "your hashed password here";
+    users.root = {
+      password = "nixos-btrfs";
+      openssh.authorizedKeys.keyFiles = [
+        (builtins.fetchurl {
+          url = "https://github.com/n8henrie.keys";
+          sha256 = "0f5zh39s2xdr6hw3i8q2p3yr713wjj5h7sljgxfkysfsrmf99ypb";
+        })
+      ];
     };
+    mutableUsers = false;
   };
 
   i18n.supportedLocales = [ "en_US.UTF-8/UTF-8" ];

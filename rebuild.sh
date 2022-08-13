@@ -8,7 +8,7 @@ set -Eeuf -o pipefail
 set -x
 
 main() {
-  rm -f ./nixos-btrfs.img ./result
+  rm -f ./btrfspi.iso ./result
   find /nix/store \
     \( -name '*nixos-btrfs*' -o -name '*btrfs-fs*' \) \
     -exec nix store delete --ignore-liveness -v {} +

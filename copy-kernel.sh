@@ -21,7 +21,7 @@ main() {
     exit $?
   fi
 
-  local img=${1:-./nixos-btrfs.img}
+  local img=${1:-./btrfspi.iso}
   tmpmount=$(mktemp -d)
   loopdev=$(losetup --find --partscan --show "${img}")
 

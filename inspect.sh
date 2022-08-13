@@ -22,7 +22,7 @@ main() {
   fi
 
   local img
-  img=${1:-nixos-btrfs.img}
+  img=${1:-btrfspi.iso}
 
   loopdev=$(losetup --find --partscan --show "${img}")
 

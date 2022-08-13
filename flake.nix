@@ -1,15 +1,14 @@
 {
-  description = "Flake to build nixos-btrfs-pi.img";
-  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-22.05-aarch64";
+  description = "sdimage for RPi3 on BTRFS root";
+  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-22.05";
   outputs = { self, nixpkgs }: {
-    defaultPackage.x86_64-linux =
+    packages.x86_64-linux.default =
       let
-        nixosConfiguration = nixpkgs.lib.nixosSystem
-          {
-            system = "aarch64-linux";
-            modules = [ ./sd-image.nix ];
-          };
+        system = "x86_64-linux";
+        pkgs = nixpkgs.legacyPackages.${system};
       in
-      nixosConfiguration.config.system.build.sdImage;
+      (import ./btrfs-sd-image.nix {
+        inherit pkgs;
+      });
   };
 }

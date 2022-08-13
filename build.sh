@@ -17,11 +17,11 @@ trap cleanup INT TERM ERR
 
 user_main() {
   [[ -r ./config.env ]] && source ./config.env
-  nix build --impure
+  nix build
 
   local result img
-  result=${1:-./result/sd-image/nixos-btrfs.img}
-  img=nixos-btrfs.img
+  result=${1:-./result/btrfspi.iso}
+  img=btrfspi.iso
 
   cp "${result}" "${img}"
   chown "${USER}:${USER}" "${img}"
@@ -40,14 +40,10 @@ user_main() {
     qemu-img resize -f raw "${img}" "${newsz}"
   fi
 
-  if [[ -n "${CUSTOMIZE_NIX_IMAGE:=""}" ]]; then
-    sudo ./customize-image.sh "${img}"
-  fi
-
   sudo ./copy-kernel.sh "${img}"
 
-  # ./nixos.sh "${img}"
-  sudo ./burn.sh
+  sudo ./burn.sh ./result/btrfspi.iso
+  ./nixos.sh "${img}"
   noti -m "burn done"
 }
 

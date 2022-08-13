@@ -9,7 +9,7 @@ set -Eeuf -o pipefail
 set -x
 
 main() {
-  local img=${1:-./nixos-btrfs.img}
+  local img=${1:-./btrfspi.iso}
   qemu-system-aarch64 \
     -M raspi3b \
     -dtb dtbs/bcm2710-rpi-3-b.dtb \

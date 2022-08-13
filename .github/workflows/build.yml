@@ -19,4 +19,4 @@ jobs:
             extra-platforms = aarch64-linux
             max-jobs = auto
       - run: |
-          ./build.sh
+          nix build --print-build-logs --show-trace
