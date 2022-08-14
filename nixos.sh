@@ -21,7 +21,9 @@ main() {
     -device usb-net,netdev=net0 \
     -netdev user,id=net0,hostfwd=tcp::2222-:22 \
     -append "rw console=ttyS0 root=LABEL=NIXOS_SD rootfstype=btrfs" \
-    -nographic
+    -nographic \
+    -serial null \
+    -serial mon:stdio
 }
 
 main "$@"
