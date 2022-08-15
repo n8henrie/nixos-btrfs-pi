@@ -1,7 +1,8 @@
 { pkgs }:
 let
   pkgsArm = import pkgs.path {
-    system = "aarch64-linux";
+    system = "x86_64-linux";
+    crossSystem = "aarch64-linux";
     overlays = [
       (self: super: {
         ubootRaspberryPi3_64bit = super.ubootRaspberryPi3_64bit.overrideAttrs (oldAttrs: {
