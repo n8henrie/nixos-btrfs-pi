@@ -166,13 +166,13 @@ pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
       dest=/mnt/.snapshots
     fi
     mkdir -p "$dest"
-    mount -t btrfs -o space_cache=v2,compress-force=zstd,subvol=$sv /dev/vda3 "$dest"
+    mount -t btrfs -o space_cache=v2,compress=zstd,subvol=$sv /dev/vda3 "$dest"
   done
 
   # All subvols should now be properly mounted at /mnt
   umount -R /btrfs
 
-  # ${populateCmd} -c ${toplevel} -d /mnt/boot
+  ${populateCmd} -c ${toplevel} -d /mnt/boot -g 0
 
   mkdir -p /mnt/etc/nixos
   # ''${writeConfigFiles "/mnt/etc/nixos/"} # not working yet
