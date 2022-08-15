@@ -23,8 +23,6 @@ let
       imports = [
         ./nixos/configuration-sample.nix
       ];
-      boot.loader.grub.enable = false;
-      boot.loader.generic-extlinux-compatible.enable = true;
     };
   };
 
@@ -81,10 +79,9 @@ pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
         dosfstools
         e2fsprogs
         jq
-        nix
+        nix # mv, cp
         python3
-        strace
-        util-linux
+        util-linux # sfdisk
       ];
 
     preVM = ''
