@@ -6,7 +6,8 @@
     ];
 
   boot = {
-    kernelParams = [ "console=tty1" "console=ttyAMA0" "console=ttyS0,115200" "root=LABEL=NIXOS_SD" "rootfstype=btrfs" "rootflags=subvol=@" "rootwait" ];
+    # console=ttyAMA0 seems necessary for kernel boot messages in qemu
+    kernelParams = [ "console=ttyAMA0" "root=UUID=44444444-4444-4444-8888-888888888889" "rootfstype=btrfs" "rootflags=subvol=@" "rootwait" ];
     initrd.kernelModules = [ "zstd" "btrfs" ];
     kernelPackages = pkgs.linuxPackages_5_18;
     loader = {
