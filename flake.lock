@@ -16,9 +16,26 @@
         "type": "github"
       }
     },
+    "nixpkgsArm": {
+      "locked": {
+        "lastModified": 1660828474,
+        "narHash": "sha256-bHqjwT8kY+FJoKWZddCDzwnmkjeXOnYHha52gMbWhpk=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "d16bbfd781b24e1a6b173f23cb6554b45104af89",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-22.05-aarch64",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "nixpkgsArm": "nixpkgsArm"
       }
     }
   },
