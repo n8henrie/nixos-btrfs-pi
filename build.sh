@@ -17,7 +17,7 @@ trap cleanup INT TERM ERR
 
 user_main() {
   [[ -r ./config.env ]] && source ./config.env
-  nix build
+  nix build --print-build-logs --show-trace |& tee build.log
 
   local result img
   result=${1:-./result/btrfspi.iso}
