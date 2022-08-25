@@ -26,8 +26,9 @@ jobs:
       - run: |
           nix build --max-jobs 4 --print-build-logs --show-trace
           nix show-derivation ./result
+      # Workaround for https://github.com/actions/upload-artifact/issues/92
+      - run: echo "UPLOAD_PATH=$(readlink -f result)" >> $GITHUB_ENV
       - uses: actions/upload-artifact@v3
         with:
           name: btrfspi
-          path: result/btrfspi.iso
-
+          path: ${{ env.UPLOAD_PATH }}
