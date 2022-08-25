@@ -26,3 +26,8 @@ jobs:
       - run: |
           nix build --max-jobs 4 --print-build-logs --show-trace
           nix show-derivation ./result
+      - uses: actions/upload-artifact@v3
+        with:
+          name: btrfspi
+          path: result/btrfspi.iso
+
