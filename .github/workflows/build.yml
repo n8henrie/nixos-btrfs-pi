@@ -24,5 +24,5 @@ jobs:
             max-jobs = auto
             system-features = big-parallel kvm
       - run: |
-          nix build --print-build-logs --show-trace
+          nix build --max-jobs 4 --print-build-logs --show-trace
           nix show-derivation ./result
