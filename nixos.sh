@@ -28,7 +28,6 @@ main() {
     -usb -device usb-kbd \
     -device usb-net,netdev=net0 \
     -netdev user,id=net0,hostfwd=tcp::2222-:22 \
-    -nographic \
     -serial null \
     -serial mon:stdio
 }
