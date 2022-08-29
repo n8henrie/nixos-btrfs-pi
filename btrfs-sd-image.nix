@@ -1,6 +1,9 @@
 { pkgs }:
 let
   pkgsArm = import pkgs.path {
+    system = "aarch64-linux";
+  };
+  pkgsCross = import pkgs.path {
     system = "x86_64-linux";
     crossSystem = {
       config = "aarch64-unknown-linux-gnu";
