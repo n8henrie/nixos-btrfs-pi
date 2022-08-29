@@ -8,18 +8,6 @@ let
     crossSystem = {
       config = "aarch64-unknown-linux-gnu";
     };
-    overlays = [
-      (self: super: {
-        ubootRaspberryPi3_64bit = super.ubootRaspberryPi3_64bit.overrideAttrs (oldAttrs: {
-          # defconfig = "rpi_3_b_plus_defconfig";
-          extraConfig = ''
-            CONFIG_CMD_BTRFS=y
-            CONFIG_ZSTD=y
-            CONFIG_BOOTCOMMAND="setenv boot_prefixes / /boot/ /@/ /@boot/; run distro_bootcmd;"
-          '';
-        });
-      })
-    ];
   };
 
   btrfspi = import (pkgsArm.path + "/nixos") {

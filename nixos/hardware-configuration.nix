@@ -5,6 +5,20 @@
       (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
+  nixpkgs.overlays = [
+    (self: super: {
+      ubootRaspberryPi3_64bit = super.ubootRaspberryPi3_64bit.overrideAttrs
+        (oldAttrs: {
+          defconfig = "rpi_3_defconfig";
+          extraConfig = ''
+            CONFIG_CMD_BTRFS=y
+            CONFIG_ZSTD=y
+            CONFIG_BOOTCOMMAND="setenv boot_prefixes / /boot/ /@/ /@boot/; run distro_bootcmd;"
+          '';
+        });
+    })
+  ];
+
   boot = {
     # console=ttyAMA0 seems necessary for kernel boot messages in qemu
     kernelParams = [ "console=ttyAMA0" "root=UUID=44444444-4444-4444-8888-888888888889" "rootfstype=btrfs" "rootflags=subvol=@" "rootwait" ];
@@ -28,15 +42,6 @@
   #   enableRedistributableFirmware = false;
   #   firmware = [ pkgs.raspberrypiWirelessFirmware ];
   # };
-
-  system.build.uboot = pkgs.ubootRaspberryPi3_64bit.overrideAttrs (oldAttrs: {
-    defconfig = "rpi_3_defconfig";
-    extraConfig = ''
-      CONFIG_CMD_BTRFS=y
-      CONFIG_ZSTD=y
-      CONFIG_BOOTCOMMAND="setenv boot_prefixes / /boot/ /@/ /@boot/; run distro_bootcmd;"
-    '';
-  });
 
   fileSystems =
     let
