@@ -21,7 +21,6 @@ main() {
   local img=${1:-./btrfspi.iso}
   qemu-system-aarch64 \
     -M raspi3b \
-    -dtb dtbs/bcm2710-rpi-3-b.dtb \
     -m 1G \
     -smp 4 \
     -drive "format=raw,file=${img}" \
