@@ -30,6 +30,21 @@
                 '';
               };
 
+            uboot =
+              let
+                overlays = (import ./nixos/hardware-configuration.nix
+                  {
+                    pkgs = pkgsArm;
+                    lib = pkgsArm.lib;
+                    modulesPath = pkgsArm.path + "/nixos/modules";
+                  }).nixpkgs.overlays;
+              in
+              (import nixpkgsArm
+                {
+                  system = "aarch64-linux";
+                  inherit overlays;
+                }).pkgs.ubootRaspberryPi3_64bit;
+
             vmScript = pkgs.writeScript "run-nixos-vm" ''
               #!${pkgs.runtimeShell}
 
@@ -39,6 +54,7 @@
 
               ${pkgs.qemu}/bin/qemu-system-aarch64 \
                 -machine raspi3b \
+                -kernel "${uboot}/u-boot.bin" \
                 -cpu max \
                 -m 1G \
                 -smp 4 \
