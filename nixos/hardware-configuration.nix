@@ -9,7 +9,6 @@
     (self: super: {
       ubootRaspberryPi3_64bit = super.ubootRaspberryPi3_64bit.overrideAttrs
         (oldAttrs: {
-          defconfig = "rpi_3_defconfig";
           extraConfig = ''
             CONFIG_CMD_BTRFS=y
             CONFIG_ZSTD=y
@@ -31,6 +30,8 @@
         configurationLimit = 20;
       };
       raspberryPi = {
+        enable = false;
+        version = 3;
         firmwareConfig = ''
           gpu_mem=16
         '';
@@ -50,7 +51,7 @@
         "ssd_spread"
         "autodefrag"
         "discard=async"
-        "compress-force=zstd"
+        "compress=zstd"
       ];
       fsType = "btrfs";
       device = "/dev/disk/by-label/NIXOS_SD";

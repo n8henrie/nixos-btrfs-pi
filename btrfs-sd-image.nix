@@ -10,9 +10,11 @@ let
     };
   };
 
-  btrfspi = import (pkgsArm.path + "/nixos") {
+  btrfspi = import (pkgs.path + "/nixos") {
     configuration = {
-      nixpkgs.system = "aarch64-linux";
+      nixpkgs = {
+        system = "aarch64-linux";
+      };
       imports = [
         ./nixos/configuration-sample.nix
       ];
@@ -20,37 +22,30 @@ let
   };
 
   toplevel = btrfspi.config.system.build.toplevel;
-  closure = pkgsArm.closureInfo
-    { rootPaths = [ toplevel ]; };
-  # uboot = btrfspi.config.system.build.uboot;
+  closure = pkgs.closureInfo { rootPaths = [ toplevel ]; };
 
   subvolumes = [ "@" "@boot" "@home" "@nix" "@snapshots" "@var" ];
 
   firmwarePartOpts =
     let
-      sdImage = (import (pkgs.path + "/nixos/modules/installer/sd-card/sd-image.nix") {
-        inherit pkgs;
-        config = pkgs.config;
-        lib = pkgs.lib;
-      }).options.sdImage;
+      opts = {
+        inherit (btrfspi) pkgs config;
+        inherit (btrfspi.pkgs) lib;
+      };
+      sdImage = (import (pkgsArm.path + "/nixos/modules/installer/sd-card/sd-image.nix") opts).options.sdImage;
+      sdImageAarch64 = import (pkgsArm.path + "/nixos/modules/installer/sd-card/sd-image-aarch64.nix");
     in
     {
       firmwarePartID = sdImage.firmwarePartitionID.default;
       firmwarePartName = sdImage.firmwarePartitionName.default;
-      inherit ((import (pkgs.path + "/nixos/modules/installer/sd-card/sd-image-aarch64.nix") {
-        pkgs = pkgsArm;
-        config = pkgsArm.config;
-        lib = pkgsArm.lib;
-      }).sdImage) populateFirmwareCommands;
+      populateFirmwareCommands = (sdImageAarch64 opts).sdImage.populateFirmwareCommands;
 
+      populateCmd = (import (pkgs.path + "/nixos/modules/system/boot/loader/generic-extlinux-compatible") {
+        inherit pkgs;
+        config = btrfspi.config;
+        lib = pkgs.lib;
+      }).config.content.boot.loader.generic-extlinux-compatible.populateCmd;
     };
-
-  populateCmd = (import (pkgs.path + "/nixos/modules/system/boot/loader/generic-extlinux-compatible")
-    {
-      inherit pkgs;
-      config = btrfspi.config;
-      lib = btrfspi.pkgs.lib;
-    }).config.content.boot.loader.generic-extlinux-compatible.populateCmd;
 
   configFiles = builtins.mapAttrs (name: val: (name: builtins.readFile val) (pkgs.lib.filterAttrs (n: _: pkgs.lib.strings.hasSuffix ".nix" n) (builtins.readDir ./nixos)));
   writeConfigFiles = dest: builtins.mapAttrs (name: val: builtins.toFile (dest + name) configFiles);
@@ -58,13 +53,6 @@ in
 
 pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
   {
-
-    buildInputs = [
-      # pkgsArm.nixos-install-tools
-      btrfspi.config.system.build.nixos-enter
-      btrfspi.config.system.build.nixos-install
-    ];
-
     nativeBuildInputs =
       with pkgs;
       [
@@ -75,6 +63,8 @@ pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
         nix # mv, cp
         python3
         util-linux # sfdisk
+        btrfspi.config.system.build.nixos-enter
+        btrfspi.config.system.build.nixos-install
       ];
 
     preVM = ''
@@ -96,7 +86,6 @@ pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
     '';
     memSize = "4G";
     QEMU_OPTS = "-drive format=raw,file=./btrfspi.iso,if=virtio -smp 4";
-    # passthru.uboot = uboot;
   } ''
 
   set -x
@@ -142,12 +131,11 @@ pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
   ## populate partition 1
   mount /dev/vda1 /tmp/firmware
   ${firmwarePartOpts.populateFirmwareCommands}
-  # cp ''${uboot}/u-boot.bin /tmp/firmware/u-boot-rpi3.bin
 
   umount -R /tmp/firmware
 
   ## populate partition 3
-  mount -t btrfs -o space_cache=v2,compress-force=zstd /dev/vda3 /btrfs
+  mount -t btrfs -o space_cache=v2,compress=zstd /dev/vda3 /btrfs
   btrfs filesystem resize max /btrfs
 
   for sv in ${builtins.toString subvolumes}; do
@@ -165,17 +153,13 @@ pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
   # All subvols should now be properly mounted at /mnt
   umount -R /btrfs
 
-  ${populateCmd} -c ${toplevel} -d /mnt/boot -g 0
+  ${firmwarePartOpts.populateCmd} -c ${toplevel} -d /mnt/boot -g 0
 
   mkdir -p /mnt/etc/nixos
   # ''${writeConfigFiles "/mnt/etc/nixos/"} # not working yet
 
   export NIX_STATE_DIR=$TMPDIR/state
   nix-store --load-db < ${closure}/registration
-
-  # mkdir -p /mnt/nix/var/nix/profiles /mnt/etc /mnt/boot
-  # ln -s ${toplevel} /mnt/nix/var/nix/profiles/system
-  # chroot /mnt ${toplevel}/bin/switch-to-configuration boot --install-bootloader
 
   echo "running nixos-install..."
   nixos-install \
@@ -209,7 +193,6 @@ pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
   size=$(btrfs filesystem usage -b /mnt | awk '/Device size:/ { print $NF }')
 
   btrfs scrub start -B /mnt
-  # btrfs filesystem balance --full-balance /mnt
   umount -R /mnt
 
   btrfs check /dev/vda3

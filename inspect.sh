@@ -22,16 +22,19 @@ main() {
   fi
 
   local img
-  img=${1:-btrfspi.iso}
+  img=${1:-./btrfspi.iso}
 
+  local loopnum loopdev
   loopdev=$(losetup --find --partscan --show "${img}")
+  loopnum=${loopdev#/dev/loop}
 
   local parts
   mapfile -t parts < <(find /dev -name "${loopdev#/dev/}p*")
 
   for part in "${parts[@]}"; do
     partnum=${part#"${loopdev}p"}
-    partdest="${dest}${partnum}"
+
+    partdest="${dest}_${loopnum}_${partnum}"
     mkdir -p "${partdest}"
     mountpoint "${partdest}" && {
       echo "already mounted!"
@@ -39,5 +42,6 @@ main() {
     }
     mount "${part}" "${partdest}" || echo "Unable to mount ${part}"
   done
+  echo "mounted at ${loopdev}"
 }
 main "$@"
