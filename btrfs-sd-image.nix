@@ -110,7 +110,7 @@ pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
     label: dos
     label-id: ${firmwarePartOpts.firmwarePartID}
 
-    start=''${gap}M,size=$firmwareSizeBlocks, type=b
+    start=''${gap}M,size=$firmwareSizeBlocks, type=b, bootable
     start=$(( $gap + $firmwareSize ))M, size=$swapSizeBlocks, type=82
     start=$(( $gap + $firmwareSize + $swapSize ))M, type=83, bootable
   EOF
@@ -132,6 +132,7 @@ pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
   mount /dev/vda1 /tmp/firmware
   ${firmwarePartOpts.populateFirmwareCommands}
 
+  ${firmwarePartOpts.populateCmd} -c ${toplevel} -d /tmp/firmware -g 0
   umount -R /tmp/firmware
 
   ## populate partition 3
