@@ -140,7 +140,6 @@ pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
   btrfs filesystem resize max /btrfs
 
   for sv in ${builtins.toString subvolumes}; do
-    echo "working with $sv"
     btrfs subvolume create /btrfs/"$sv"
 
     dest="/mnt/''${sv#@}"
