@@ -134,8 +134,9 @@ pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
 
   umount -R /tmp/firmware
 
+  btrfsopt=space_cache=v2,compress-force=zstd
   ## populate partition 3
-  mount -t btrfs -o space_cache=v2,compress=zstd /dev/vda3 /btrfs
+  mount -t btrfs -o "$btrfsopts" /dev/vda3 /btrfs
   btrfs filesystem resize max /btrfs
 
   for sv in ${builtins.toString subvolumes}; do
@@ -147,7 +148,7 @@ pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
       dest=/mnt/.snapshots
     fi
     mkdir -p "$dest"
-    mount -t btrfs -o space_cache=v2,compress=zstd,subvol=$sv /dev/vda3 "$dest"
+    mount -t btrfs -o "''${btrfsopts},subvol=$sv" /dev/vda3 "$dest"
   done
 
   # All subvols should now be properly mounted at /mnt
