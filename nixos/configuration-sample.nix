@@ -10,10 +10,12 @@
     useDHCP = false;
     interfaces = {
       eth0.useDHCP = true;
+      wlan0.useDHCP = true;
     };
     firewall.enable = false;
     wireless = {
       enable = true;
+      interfaces = [ "wlan0" ];
       networks = {
         "MyWifi" = {
           pskRaw = "totally Real";
