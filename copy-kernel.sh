@@ -21,7 +21,7 @@ main() {
     exit $?
   fi
 
-  local img=${1:-./btrfspi.iso}
+  local img=${1:-./result/btrfspi.iso}
   tmpmount=$(mktemp -d)
   loopdev=$(losetup --find --partscan --show "${img}")
 

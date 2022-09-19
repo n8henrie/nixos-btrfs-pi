@@ -23,7 +23,7 @@ main() {
   fi
 
   local img outdev
-  img=${1:-./btrfspi.iso}
+  img=${1:-./result/btrfspi.iso}
   outdev='/dev/disk/by-id/usb-TS-RDF5_SD_Transcend_000000000039-0:0'
   [[ -b "${outdev}" ]] || err "device not found: ${outdev}"
 
