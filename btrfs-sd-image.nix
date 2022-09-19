@@ -139,7 +139,7 @@ pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
   mount -t btrfs -o "$btrfsopts" /dev/vda3 /btrfs
   btrfs filesystem resize max /btrfs
 
-  for sv in ${builtins.toString subvolumes}; do
+  for sv in ${toString subvolumes}; do
     btrfs subvolume create /btrfs/"$sv"
 
     dest="/mnt/''${sv#@}"
