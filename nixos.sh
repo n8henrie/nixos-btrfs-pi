@@ -23,7 +23,7 @@ main() {
     -M raspi3b \
     -m 1G \
     -smp 4 \
-    -drive "format=raw,file=${img}" \
+    -drive "format=raw,if=sd,file=${img}" \
     -kernel ./u-boot-rpi3.bin \
     -usb -device usb-kbd \
     -device usb-net,netdev=net0 \
