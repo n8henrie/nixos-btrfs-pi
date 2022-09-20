@@ -1,7 +1,7 @@
 {
   description = "sdimage for RPi3 on BTRFS root";
-  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-22.05";
-  inputs.nixpkgsArm.url = "github:nixos/nixpkgs/nixos-22.05-aarch64";
+  inputs.nixpkgs.url = "nixpkgs/nixos-22.05";
+  inputs.nixpkgsArm.url = "nixpkgs/nixos-22.05-aarch64";
   outputs = { self, nixpkgs, nixpkgsArm }: {
     packages.x86_64-linux =
       let
