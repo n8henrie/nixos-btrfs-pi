@@ -42,6 +42,6 @@ main() {
     }
     mount "${part}" "${partdest}" || echo "Unable to mount ${part}"
   done
-  echo "mounted at ${loopdev}"
+  echo "mounted at ${partdest}"
 }
 main "$@"
