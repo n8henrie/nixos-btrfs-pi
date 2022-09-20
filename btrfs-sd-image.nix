@@ -22,7 +22,24 @@ let
   };
 
   toplevel = btrfspi.config.system.build.toplevel;
-  closure = pkgs.closureInfo { rootPaths = [ toplevel ]; };
+  channelSources =
+    let
+      nixpkgs = pkgs.lib.cleanSource pkgs.path;
+    in
+    pkgs.runCommand "nixos-${btrfspi.config.system.nixos.version}" { } ''
+      mkdir -p $out
+      cp -prd ${nixpkgs.outPath} $out/nixos
+      chmod -R u+w $out/nixos
+      if [ ! -e $out/nixos/nixpkgs ]; then
+        ln -s . $out/nixos/nixpkgs
+      fi
+      rm -rf $out/nixos/.git
+      echo -n ${btrfspi.config.system.nixos.versionSuffix} > $out/nixos/.version-suffix
+    '';
+
+  closure = pkgs.closureInfo {
+    rootPaths = [ toplevel channelSources ];
+  };
 
   subvolumes = [ "@" "@boot" "@home" "@nix" "@snapshots" "@var" ];
 
@@ -47,46 +64,57 @@ let
       }).config.content.boot.loader.generic-extlinux-compatible.populateCmd;
     };
 
-  configFiles = builtins.mapAttrs (name: val: (name: builtins.readFile val) (pkgs.lib.filterAttrs (n: _: pkgs.lib.strings.hasSuffix ".nix" n) (builtins.readDir ./nixos)));
-  writeConfigFiles = dest: builtins.mapAttrs (name: val: builtins.toFile (dest + name) configFiles);
+
+  # Take contents of ./nixos/*.nix and make list of derivations
+  configFiles = with builtins; dir:
+    attrValues (mapAttrs
+      (name: value:
+        let
+          filename = if name == "configuration-sample.nix" then "configuration.nix" else name;
+        in
+        pkgs.writeTextDir "share/${filename}" (readFile "${dir}/${name}")
+      )
+      (pkgs.lib.filterAttrs (n: _: pkgs.lib.strings.hasSuffix ".nix" n) (readDir dir)));
 in
 
-pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
-  {
-    nativeBuildInputs =
-      with pkgs;
-      [
-        btrfs-progs
-        dosfstools
-        e2fsprogs
-        jq
-        nix # mv, cp
-        python3
-        util-linux # sfdisk
-        btrfspi.config.system.build.nixos-enter
-        btrfspi.config.system.build.nixos-install
-      ];
+pkgs.vmTools.runInLinuxVM
+  (pkgs.runCommand "btrfspi-sd"
+    {
+      enableParallelBuilding = true;
+      nativeBuildInputs =
+        with pkgs;
+        [
+          btrfs-progs
+          dosfstools
+          e2fsprogs
+          jq
+          nix # mv, cp
+          python3
+          util-linux # sfdisk
+          btrfspi.config.system.build.nixos-enter
+          btrfspi.config.system.build.nixos-install
+        ];
 
-    preVM = ''
-      ${pkgs.vmTools.qemu}/bin/qemu-img create -f raw ./btrfspi.iso 4G
-    '';
-    postVM = ''
-      img=./btrfspi.iso
+      preVM = ''
+        ${pkgs.vmTools.qemu}/bin/qemu-img create -f raw ./btrfspi.iso 8G
+      '';
+      postVM = ''
+        img=./btrfspi.iso
 
-      json=$(${pkgs.util-linux}/bin/sfdisk --json --output end "$img")
-      start=$(${pkgs.jq}/bin/jq .partitiontable.partitions[-1].start <<< "$json")
-      size=$(${pkgs.jq}/bin/jq .partitiontable.partitions[-1].size <<< "$json")
-      sectsize=$(${pkgs.jq}/bin/jq .partitiontable.sectorsize <<< "$json")
-      endbytes=$((("$start" + "$size" + 1) * "$sectsize"))
+        json=$(${pkgsArm.util-linux}/bin/sfdisk --json --output end "$img")
+        start=$(${pkgsArm.jq}/bin/jq .partitiontable.partitions[-1].start <<< "$json")
+        size=$(${pkgsArm.jq}/bin/jq .partitiontable.partitions[-1].size <<< "$json")
+        sectsize=$(${pkgsArm.jq}/bin/jq .partitiontable.sectorsize <<< "$json")
+        endbytes=$((("$start" + "$size" + 1) * "$sectsize"))
 
-      truncate --size "$endbytes" "$img"
+        truncate --size "$endbytes" "$img"
 
-      mkdir -p $out
-      mv "$img" $out/
-    '';
-    memSize = "4G";
-    QEMU_OPTS = "-drive format=raw,file=./btrfspi.iso,if=virtio -smp 4";
-  } ''
+        mkdir -p $out
+        mv "$img" $out/
+      '';
+      memSize = "4G";
+      QEMU_OPTS = "-drive format=raw,file=./btrfspi.iso,if=virtio -smp 16";
+    } ''
 
   set -x
   ${pkgs.kmod}/bin/modprobe btrfs
@@ -153,23 +181,32 @@ pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
   # All subvols should now be properly mounted at /mnt
   umount -R /btrfs
 
+  # Enabling compression prevents uboot from booting for some reason
+  chattr +C /mnt/boot
+
   ${firmwarePartOpts.populateCmd} -c ${toplevel} -d /mnt/boot -g 0
 
   mkdir -p /mnt/etc/nixos
-  # ''${writeConfigFiles "/mnt/etc/nixos/"} # not working yet
+  for config in ${toString (configFiles ./nixos)}; do
+    cp -a "$config"/share/. /mnt/etc/nixos
+  done
+  chmod +w /mnt/etc/nixos/*.nix
 
   export NIX_STATE_DIR=$TMPDIR/state
   nix-store --load-db < ${closure}/registration
 
+  cp ${closure}/registration /mnt/nix-path-registration
+
   echo "running nixos-install..."
   nixos-install \
-    --max-jobs 4 \
+    --max-jobs 16 \
     --cores 0 \
     --root /mnt \
     --no-root-passwd \
     --system ${toplevel} \
     --no-bootloader \
-    --substituters ""
+    --substituters "" \
+    --channel ${channelSources}
 
   # Shrink BTRFS filesystem
   while :; do
@@ -185,7 +222,7 @@ pkgs.vmTools.runInLinuxVM (pkgs.runCommand "btrfspi-sd"
     )
 
     local shrink_by
-    shrink_by=$(python3 -c "print(int($free_min * 0.90))")
+    shrink_by=$(python3 -c "print(int($free_min * 0.9))")
     btrfs filesystem resize -"$shrink_by" /mnt || break
   done
 

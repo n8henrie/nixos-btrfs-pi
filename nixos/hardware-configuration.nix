@@ -12,6 +12,7 @@
           extraConfig = ''
             CONFIG_CMD_BTRFS=y
             CONFIG_ZSTD=y
+
             CONFIG_BOOTCOMMAND="setenv boot_prefixes / /boot/ /@/ /@boot/; run distro_bootcmd;"
           '';
         });
@@ -20,29 +21,35 @@
 
   boot = {
     # console=ttyAMA0 seems necessary for kernel boot messages in qemu
-    kernelParams = [ "console=ttyAMA0" "root=UUID=44444444-4444-4444-8888-888888888889" "rootfstype=btrfs" "rootflags=subvol=@" "rootwait" ];
+    kernelParams = [
+      "console=ttyS0,115200n8"
+      "console=ttyAMA0,115200n8"
+      "console=tty0"
+      "root=/dev/mmcblk0p3"
+      "rootfstype=btrfs"
+      "rootflags=subvol=@"
+      "rootwait"
+    ];
     initrd.kernelModules = [ "zstd" "btrfs" ];
-    kernelPackages = pkgs.linuxPackages_5_18;
     loader = {
       grub.enable = false;
       generic-extlinux-compatible = {
-        enable = true;
+        enable = false;
         configurationLimit = 20;
       };
       raspberryPi = {
-        enable = false;
+        enable = true;
         version = 3;
+        uboot = {
+          enable = true;
+          configurationLimit = 20;
+        };
         firmwareConfig = ''
           gpu_mem=16
         '';
       };
     };
   };
-
-  # hardware = {
-  #   enableRedistributableFirmware = false;
-  #   firmware = [ pkgs.raspberrypiWirelessFirmware ];
-  # };
 
   fileSystems =
     let
@@ -51,7 +58,7 @@
         "ssd_spread"
         "autodefrag"
         "discard=async"
-        "compress=zstd"
+        "compress-force=zstd"
       ];
       fsType = "btrfs";
       device = "/dev/disk/by-label/NIXOS_SD";
