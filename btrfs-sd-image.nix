@@ -112,8 +112,8 @@ pkgs.vmTools.runInLinuxVM
         mkdir -p $out
         mv "$img" $out/
       '';
-      memSize = "4G";
-      QEMU_OPTS = "-drive format=raw,file=./btrfspi.iso,if=virtio -smp 16";
+      memSize = "16G";
+      QEMU_OPTS = "-drive format=raw,file=./btrfspi.iso,if=virtio";
     } ''
 
   set -x
@@ -199,7 +199,7 @@ pkgs.vmTools.runInLinuxVM
 
   echo "running nixos-install..."
   nixos-install \
-    --max-jobs 16 \
+    --max-jobs auto \
     --cores 0 \
     --root /mnt \
     --no-root-passwd \
