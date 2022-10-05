@@ -22,7 +22,7 @@ main() {
   fi
 
   local img
-  img=${1:-./btrfspi.iso}
+  img=${1:-./result/btrfspi.iso}
 
   local loopnum loopdev
   loopdev=$(losetup --find --partscan --show "${img}")
