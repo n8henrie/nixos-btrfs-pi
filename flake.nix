@@ -39,9 +39,10 @@
                     modulesPath = pkgsArm.path + "/nixos/modules";
                   }).nixpkgs.overlays;
               in
-              (import nixpkgsArm
+              (import nixpkgs
                 {
-                  system = "aarch64-linux";
+                  system = "x86_64-linux";
+                  crossSystem = "aarch64-linux";
                   inherit overlays;
                 }).pkgs.ubootRaspberryPi3_64bit;
 
