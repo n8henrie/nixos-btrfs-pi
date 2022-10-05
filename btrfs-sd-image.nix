@@ -130,12 +130,14 @@ pkgs.vmTools.runInLinuxVM
         ${pkgs.vmTools.qemu}/bin/qemu-img create -f raw ./btrfspi.iso 8G
       '';
       postVM = ''
+        # Truncate the file at the end of the last partition
+        PATH=${pkgs.util-linux}/bin:${pkgs.jq}/bin:$PATH
         img=./btrfspi.iso
 
-        json=$(${pkgsArm.util-linux}/bin/sfdisk --json --output end "$img")
-        start=$(${pkgsArm.jq}/bin/jq .partitiontable.partitions[-1].start <<< "$json")
-        size=$(${pkgsArm.jq}/bin/jq .partitiontable.partitions[-1].size <<< "$json")
-        sectsize=$(${pkgsArm.jq}/bin/jq .partitiontable.sectorsize <<< "$json")
+        json=$(sfdisk --json --output end "$img")
+        start=$(jq .partitiontable.partitions[-1].start <<< "$json")
+        size=$(jq .partitiontable.partitions[-1].size <<< "$json")
+        sectsize=$(jq .partitiontable.sectorsize <<< "$json")
         endbytes=$((("$start" + "$size" + 1) * "$sectsize"))
 
         truncate --size "$endbytes" "$img"
