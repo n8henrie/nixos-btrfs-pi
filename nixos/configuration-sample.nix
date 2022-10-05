@@ -87,35 +87,6 @@
     '';
   };
 
-  boot.postBootCommands = with pkgs; ''
-    # On the first boot do some maintenance tasks
-    if [ -f /nix-path-registration ]; then
-      set -euo pipefail
-      set -x
-      # Figure out device names for the boot device and root filesystem.
-      rootPart=$(${util-linux}/bin/findmnt -nvo SOURCE /)
-      firmwareDevice=$(lsblk -npo PKNAME $rootPart)
-      partNum=$(
-        lsblk -npo MAJ:MIN "$rootPart" |
-        ${gawk}/bin/awk -F: '{print $2}' |
-        tr -d '[:space:]'
-      )
-
-      # Resize the root partition and the filesystem to fit the disk
-      echo ',+,' | sfdisk -N"$partNum" --no-reread "$firmwareDevice"
-      ${parted}/bin/partprobe
-      ${btrfs-progs}/bin/btrfs filesystem resize max /
-
-      # Register the contents of the initial Nix store
-      ${config.nix.package.out}/bin/nix-store --load-db < /nix-path-registration
-
-      # nixos-rebuild also requires a "system" profile and an /etc/NIXOS tag.
-      touch /etc/NIXOS
-      ${config.nix.package.out}/bin/nix-env -p /nix/var/nix/profiles/system --set /run/current-system
-      # Prevents this from running on later boots.
-      rm -f /nix-path-registration
-    fi
-  '';
 
   system = {
     # Uncomment this once things seem to be going well
