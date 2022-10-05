@@ -82,8 +82,8 @@ let
         inherit (btrfspi) pkgs config;
         inherit (btrfspi.pkgs) lib;
       };
-      sdImage = (import (pkgsArm.path + "/nixos/modules/installer/sd-card/sd-image.nix") opts).options.sdImage;
-      sdImageAarch64 = import (pkgsArm.path + "/nixos/modules/installer/sd-card/sd-image-aarch64.nix");
+      sdImage = (import (pkgsCross.path + "/nixos/modules/installer/sd-card/sd-image.nix") opts).options.sdImage;
+      sdImageAarch64 = import (pkgsCross.path + "/nixos/modules/installer/sd-card/sd-image-aarch64.nix");
     in
     {
       firmwarePartID = sdImage.firmwarePartitionID.default;
