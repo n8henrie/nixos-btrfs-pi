@@ -145,8 +145,8 @@ pkgs.vmTools.runInLinuxVM
         mkdir -p $out
         mv "$img" $out/
       '';
-      memSize = "16G";
-      QEMU_OPTS = "-drive format=raw,file=./btrfspi.iso,if=virtio";
+      memSize = "4G";
+      QEMU_OPTS = "-drive format=raw,file=./btrfspi.iso,if=virtio,cache=unsafe,werror=report";
     } ''
 
   set -x
