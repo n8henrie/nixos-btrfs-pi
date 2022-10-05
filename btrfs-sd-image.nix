@@ -74,7 +74,7 @@ let
     rootPaths = [ toplevel channelSources ];
   };
 
-  subvolumes = [ "@" "@boot" "@home" "@nix" "@snapshots" "@var" ];
+  subvolumes = [ "@" "@boot" "@gnu" "@home" "@nix" "@snapshots" "@var" ];
 
   firmwarePartOpts =
     let
