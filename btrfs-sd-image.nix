@@ -120,9 +120,7 @@ pkgs.vmTools.runInLinuxVM
           btrfs-progs
           dosfstools
           e2fsprogs
-          jq
           nix # mv, cp
-          python3
           util-linux # sfdisk
           btrfspi.config.system.build.nixos-enter
           btrfspi.config.system.build.nixos-install
@@ -150,6 +148,40 @@ pkgs.vmTools.runInLinuxVM
     } ''
 
   set -x
+
+  shrinkBTRFSFs() {
+    local mpoint shrinkBy
+    mpoint=''${1:-/mnt}
+
+    while :; do
+      shrinkBy=$(
+        btrfs filesystem usage -b "$mpoint" |
+        awk \
+          -v fudgeFactor=0.9 \
+          -F'[^0-9]' \
+          '
+            /Free.*min:/ {
+              sz = $(NF-1) * fudgeFactor
+              print int(sz)
+              exit
+            }
+          '
+      )
+      btrfs filesystem resize -"$shrinkBy" "$mpoint" || break
+    done
+    btrfs scrub start -B "$mpoint"
+  }
+
+  shrinkLastPartition() {
+    local blockDev sizeInK partNum
+
+    blockDev=''${1:-/dev/vda}
+    sizeInK=$2
+    partNum=$(ls "$blockDev"?* | wc -l)
+
+    echo ",$sizeInK" | sfdisk -N"$partNum" "$blockDev"
+  }
+
   ${pkgs.kmod}/bin/modprobe btrfs
   ${pkgs.udev}/lib/systemd/systemd-udevd &
 
@@ -171,33 +203,31 @@ pkgs.vmTools.runInLinuxVM
     label: dos
     label-id: ${firmwarePartOpts.firmwarePartID}
 
-    start=''${gap}M,size=$firmwareSizeBlocks, type=b
+    start=''${gap}M,size=$firmwareSizeBlocks, type=b, bootable
     start=$(( $gap + $firmwareSize ))M, size=$swapSizeBlocks, type=82
-    start=$(( $gap + $firmwareSize + $swapSize ))M, type=83, bootable
+    start=$(( $gap + $firmwareSize + $swapSize ))M, type=83
   EOF
 
   ${pkgs.udev}/bin/udevadm settle
 
-  ## partition 1: rpi firmware
+  # partition 1: rpi firmware
   mkfs.vfat -n ${firmwarePartOpts.firmwarePartName} /dev/vda1
-  ## partition 2: swap (maybe don't need with zram enabled?)
+
+  # partition 2: swap (maybe don't need with zram enabled?)
   mkswap --label SWAP /dev/vda2
-  ## partition 3: btrfs root
-  mkfs.btrfs -L NIXOS_SD -U "44444444-4444-4444-8888-888888888889" /dev/vda3
+
+  # partition 3: btrfs root
+  mkfs.btrfs \
+    --label NIXOS_SD \
+    --uuid "44444444-4444-4444-8888-888888888889" \
+    /dev/vda3
 
   ${pkgs.udev}/bin/udevadm settle
 
   mkdir -p /mnt /btrfs /tmp/firmware
 
-  ## populate partition 1
-  mount /dev/vda1 /tmp/firmware
-  ${firmwarePartOpts.populateFirmwareCommands}
-
-  umount -R /tmp/firmware
-
   btrfsopt=space_cache=v2,compress-force=zstd
-  ## populate partition 3
-  mount -t btrfs -o "$btrfsopts" /dev/vda3 /btrfs
+  mount -t btrfs -o "$btrfsopts" /dev/disk/by-label/NIXOS_SD /btrfs
   btrfs filesystem resize max /btrfs
 
   for sv in ${toString subvolumes}; do
@@ -208,25 +238,36 @@ pkgs.vmTools.runInLinuxVM
       dest=/mnt/.snapshots
     fi
     mkdir -p "$dest"
-    mount -t btrfs -o "''${btrfsopts},subvol=$sv" /dev/vda3 "$dest"
+    mount -t btrfs -o "''${btrfsopts},subvol=$sv" /dev/disk/by-label/NIXOS_SD "$dest"
   done
 
   # All subvols should now be properly mounted at /mnt
   umount -R /btrfs
 
-  # Enabling compression prevents uboot from booting for some reason
+  # Enabling compression (or COW?) prevents uboot from booting directly from
+  # BTRFS for some reason
   chattr +C /mnt/boot
 
+  # Populate firmware files into FIRMWARE partition
+  mount /dev/disk/by-label/${firmwarePartOpts.firmwarePartName} /tmp/firmware
+  ${firmwarePartOpts.populateFirmwareCommands}
+
+  # populate boot files into FIRMWARE partition
+  ${firmwarePartOpts.populateCmd} -c ${toplevel} -d /tmp/firmware -g 0
+
+  # populate boot files into NIXOS_SD partition
   ${firmwarePartOpts.populateCmd} -c ${toplevel} -d /mnt/boot -g 0
 
-  mkdir -p /mnt/etc/nixos
+  mkdir -p /mnt/{etc/nixos,boot/firmware}
   for config in ${toString (configFiles ./nixos)}; do
     cp -a "$config"/share/. /mnt/etc/nixos
   done
   chmod +w /mnt/etc/nixos/*.nix
 
   export NIX_STATE_DIR=$TMPDIR/state
-  nix-store --load-db < ${closure}/registration
+  nix-store --load-db \
+    --option build-users-group "" \
+    < ${closure}/registration
 
   cp ${closure}/registration /mnt/nix-path-registration
 
@@ -236,45 +277,22 @@ pkgs.vmTools.runInLinuxVM
     --cores 0 \
     --root /mnt \
     --no-root-passwd \
-    --system ${toplevel} \
     --no-bootloader \
     --substituters "" \
+    --option build-users-group "" \
+    --system ${toplevel} \
     --channel ${channelSources}
 
-  # Shrink BTRFS filesystem
-  while :; do
-    local free_min
-    free_min=$(
-      btrfs filesystem usage -b /mnt |
-        awk '
-        /Free.*min:/ {
-          gsub(/[^0-9]/, "", $NF)
-          print $NF
-        }
-      '
-    )
-
-    local shrink_by
-    shrink_by=$(python3 -c "print(int($free_min * 0.9))")
-    btrfs filesystem resize -"$shrink_by" /mnt || break
-  done
+  shrinkBTRFSFs /mnt
 
   local size
-  size=$(btrfs filesystem usage -b /mnt | awk '/Device size:/ { print $NF }')
+  sizeInK=$(
+    btrfs filesystem usage -b /mnt |
+    awk '/Device size:/ { print ($NF / 1024) "KiB" }'
+  )
 
-  btrfs scrub start -B /mnt
-  umount -R /mnt
+  umount -R /mnt /tmp/firmware
 
-  btrfs check /dev/vda3
-
-  # Shrink partition
-  local json sectsize
-  json=$(sfdisk --json --output end /dev/vda)
-  sectsize=$(jq .partitiontable.sectorsize <<< "$json")
-
-  local num_sects
-  num_sects=$(("$size" / "$sectsize" + 1))
-  echo ",$num_sects" | sfdisk -N 3 /dev/vda
-
-  btrfs check /dev/vda3
+  shrinkLastPartition /dev/vda "$sizeInK"
+  btrfs check /dev/disk/by-label/NIXOS_SD
 '')
