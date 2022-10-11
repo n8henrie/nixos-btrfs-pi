@@ -99,7 +99,6 @@ let
       }).config.content.boot.loader.generic-extlinux-compatible.populateCmd;
     };
 
-
   # Take contents of ./nixos/*.nix and make list of derivations
   configFiles = with builtins; dir:
     attrValues (mapAttrs
@@ -322,4 +321,4 @@ pkgs.vmTools.runInLinuxVM
 
   shrinkLastPartition /dev/vda "$sizeInK"
   btrfs check /dev/disk/by-label/NIXOS_SD
-'')
+  '')
