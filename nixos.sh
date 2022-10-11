@@ -29,7 +29,8 @@ main() {
     -device usb-net,netdev=net0 \
     -netdev user,id=net0,hostfwd=tcp::2222-:22 \
     -serial null \
-    -serial mon:stdio
+    -serial mon:stdio \
+    -append 'root=/dev/mmcblk0p2 rootfstype=btrfs rootflags=subvol=@ rootwait'
 }
 
 main "$@"
