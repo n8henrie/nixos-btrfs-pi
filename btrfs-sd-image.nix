@@ -54,6 +54,8 @@ let
     };
   };
 
+  bootFromBTRFS = true;
+
   toplevel = btrfspi.config.system.build.toplevel;
   channelSources =
     let
@@ -210,39 +212,39 @@ pkgs.vmTools.runInLinuxVM
   # Gap before first partition
   gap=1
 
-  swapSize=1024
-  swapSizeBlocks=$(( $swapSize * 1024 * 1024 / 512 ))
-
   firmwareSize=512
   firmwareSizeBlocks=$(( $firmwareSize * 1024 * 1024 / 512 ))
 
-  # type=b is 'W95 FAT32', 82 is swap, 83 is 'Linux'.
+  # type=b is 'W95 FAT32', 83 is 'Linux'.
   # The "bootable" partition is where u-boot will look file for the bootloader
   # information (dtbs, extlinux.conf file).
   # Setting the bootable flag on the btrfs partition allows booting directly
+
+  fatBootable=
+  BTRFSBootable=bootable
+  if [ ! ${toString bootFromBTRFS} ]; then
+    fatBootable=bootable
+    BTRFSBootable=
+  fi
 
   sfdisk /dev/vda <<EOF
     label: dos
     label-id: ${firmwarePartOpts.firmwarePartID}
 
-    start=''${gap}M,size=$firmwareSizeBlocks, type=b, bootable
-    start=$(( $gap + $firmwareSize ))M, size=$swapSizeBlocks, type=82
-    start=$(( $gap + $firmwareSize + $swapSize ))M, type=83
+    start=''${gap}M,size=$firmwareSizeBlocks, type=b, $fatBootable
+    start=$(( $gap + $firmwareSize ))M, type=83, $BTRFSBootable
   EOF
 
   ${pkgs.udev}/bin/udevadm settle
 
-  # partition 1: rpi firmware
+  # rpi firmware
   mkfs.vfat -n ${firmwarePartOpts.firmwarePartName} /dev/vda1
 
-  # partition 2: swap (maybe don't need with zram enabled?)
-  mkswap --label SWAP /dev/vda2
-
-  # partition 3: btrfs root
+  # btrfs root
   mkfs.btrfs \
     --label NIXOS_SD \
     --uuid "44444444-4444-4444-8888-888888888889" \
-    /dev/vda3
+    /dev/vda2
 
   ${pkgs.udev}/bin/udevadm settle
 
@@ -260,7 +262,7 @@ pkgs.vmTools.runInLinuxVM
       dest=/mnt/.snapshots
     fi
     mkdir -p "$dest"
-    mount -t btrfs -o "''${btrfsopts},subvol=$sv" /dev/disk/by-label/NIXOS_SD "$dest"
+    mount -t btrfs -o "$btrfsopts,subvol=$sv" /dev/disk/by-label/NIXOS_SD "$dest"
   done
 
   # All subvols should now be properly mounted at /mnt
@@ -274,11 +276,13 @@ pkgs.vmTools.runInLinuxVM
   mount /dev/disk/by-label/${firmwarePartOpts.firmwarePartName} /tmp/firmware
   ${firmwarePartOpts.populateFirmwareCommands}
 
-  # populate boot files into FIRMWARE partition
-  ${firmwarePartOpts.populateCmd} -c ${toplevel} -d /tmp/firmware -g 0
+  if [ ${ toString bootFromBTRFS } ]; then
+    bootDest=/mnt/boot
+  else
+    bootDest=/tmp/firmware
+  fi
 
-  # populate boot files into NIXOS_SD partition
-  ${firmwarePartOpts.populateCmd} -c ${toplevel} -d /mnt/boot -g 0
+  ${firmwarePartOpts.populateCmd} -c ${toplevel} -d "$bootDest" -g 0
 
   mkdir -p /mnt/{etc/nixos,boot/firmware}
   for config in ${toString (configFiles ./nixos)}; do
@@ -308,7 +312,7 @@ pkgs.vmTools.runInLinuxVM
 
   shrinkBTRFSFs /mnt
 
-  local size
+  local sizeInK
   sizeInK=$(
     btrfs filesystem usage -b /mnt |
     awk '/Device size:/ { print ($NF / 1024) "KiB" }'
