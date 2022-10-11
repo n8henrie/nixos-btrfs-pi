@@ -250,7 +250,7 @@ pkgs.vmTools.runInLinuxVM
 
   mkdir -p /mnt /btrfs /tmp/firmware
 
-  btrfsopt=space_cache=v2,compress-force=zstd
+  btrfsopts=space_cache=v2,compress-force=zstd
   mount -t btrfs -o "$btrfsopts" /dev/disk/by-label/NIXOS_SD /btrfs
   btrfs filesystem resize max /btrfs
 
