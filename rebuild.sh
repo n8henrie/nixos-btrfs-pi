@@ -10,7 +10,7 @@ set -x
 main() {
   rm -f ./btrfspi.iso ./result
   find /nix/store \
-    \( -name '*nixos-btrfs*' -o -name '*btrfs-fs*' \) \
+    \( -name '*nixos-btrfs*' -o -name '*btrfs-fs*' -o -name '*btrfspi*' \) \
     -exec nix store delete --ignore-liveness -v {} +
   sudo -u "${SUDO_USER}" ./build.sh
 }
