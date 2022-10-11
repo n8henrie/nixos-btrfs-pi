@@ -95,12 +95,6 @@
       };
     };
 
-  swapDevices = [
-    {
-      device = "/dev/disk/by-label/SWAP";
-    }
-  ];
-
   zramSwap = {
     enable = true;
     memoryPercent = 50;
