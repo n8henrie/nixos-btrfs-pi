@@ -20,10 +20,10 @@ let
       ];
       boot.postBootCommands = with pkgsCross; ''
         # On the first boot do some maintenance tasks
-        if [ -f /nix-path-registration ]; then
-          set -Eeuf -o pipefail
-          set -x
+        set -Eeuf -o pipefail
+        set -x
 
+        if [ -f /nix-path-registration ]; then
           # Figure out device names for the boot device and root filesystem.
           rootPart=$(${pkgsArm.util-linux}/bin/findmnt -nvo SOURCE /)
           firmwareDevice=$(lsblk -npo PKNAME $rootPart)
@@ -149,6 +149,8 @@ pkgs.vmTools.runInLinuxVM
       QEMU_OPTS = "-drive format=raw,file=./btrfspi.iso,if=virtio,cache=unsafe,werror=report";
     } ''
 
+  # NB: Don't set -f, as some of the builtin nix stuff depends on globbing
+  set -Eeu -o pipefail
   set -x
 
   shrinkBTRFSFs() {
@@ -179,7 +181,25 @@ pkgs.vmTools.runInLinuxVM
 
     blockDev=''${1:-/dev/vda}
     sizeInK=$2
-    partNum=$(ls "$blockDev"?* | wc -l)
+
+    partNum=$(
+      lsblk --paths --list --noheadings --output name,type "$blockDev" |
+        awk \
+          -v blockdev="$blockDev" \
+          '
+            # Assume lsblk has output these in order, get the name of
+            # last device it identifies as a partition
+            $2 == "part" {
+              partname = $1
+            }
+
+            # Strip out the blockdev so we get just partition number
+            END {
+                gsub(blockdev, "", partname)
+                print partname
+            }
+          '
+    )
 
     echo ",$sizeInK" | sfdisk -N"$partNum" "$blockDev"
   }
@@ -264,7 +284,8 @@ pkgs.vmTools.runInLinuxVM
   for config in ${toString (configFiles ./nixos)}; do
     cp -a "$config"/share/. /mnt/etc/nixos
   done
-  chmod +w /mnt/etc/nixos/*.nix
+  # These are read-only in the store; make them writable again
+  find /mnt/etc/nixos -name '*.nix' -exec chmod +w {} +
 
   export NIX_STATE_DIR=$TMPDIR/state
   nix-store --load-db \
