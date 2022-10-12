@@ -42,7 +42,7 @@ user_main() {
 
   sudo ./copy-kernel.sh "${img}"
 
-  if [[ -z "${CI}" ]]; then
+  if [[ -z "${CI:-}" ]]; then
     # Don't fail if my SD card isn't present
     sudo ./burn.sh ./result/btrfspi.iso || true
     noti -m "burn done"
