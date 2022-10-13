@@ -8,12 +8,16 @@ let
     crossSystem.system = "aarch64-linux";
   };
 
+  BTRFSDupData = true;
+  bootFromBTRFS = false;
+
   btrfspi = import (pkgs.path + "/nixos") {
     configuration = {
       nixpkgs.localSystem.system = "aarch64-linux";
       imports = [
         ./nixos/configuration-sample.nix
       ];
+
       boot.postBootCommands = with pkgsCross; ''
         # On the first boot do some maintenance tasks
         set -Eeuf -o pipefail
@@ -34,6 +38,10 @@ let
           ${parted}/bin/partprobe
           ${btrfs-progs}/bin/btrfs filesystem resize max /
 
+          if [ ${toString BTRFSDupData} ]; then
+            ${btrfs-progs}/bin/btrfs balance start -dconvert=DUP /
+          fi
+
           # Register the contents of the initial Nix store
           ${btrfspi.config.nix.package.out}/bin/nix-store --load-db < /nix-path-registration
 
@@ -49,8 +57,6 @@ let
       '';
     };
   };
-
-  bootFromBTRFS = true;
 
   toplevel = btrfspi.config.system.build.toplevel;
   channelSources =
