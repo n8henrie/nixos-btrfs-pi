@@ -80,10 +80,13 @@
   i18n.supportedLocales = [ "en_US.UTF-8/UTF-8" ];
 
   nix = {
+    settings = {
+      max-jobs = "auto";
+      auto-optimise-store = true;
+      cores = 0;
+    };
     extraOptions = ''
       experimental-features = nix-command flakes
-      max-jobs = auto
-      auto-optimise-store = true
     '';
   };
 
