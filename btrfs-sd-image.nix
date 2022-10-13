@@ -45,12 +45,6 @@ let
           # Register the contents of the initial Nix store
           ${btrfspi.config.nix.package.out}/bin/nix-store --load-db < /nix-path-registration
 
-          # nixos-rebuild also requires a "system" profile and an /etc/NIXOS tag.
-          touch /etc/NIXOS
-          ${btrfspi.config.nix.package.out}/bin/nix-env \
-            -p /nix/var/nix/profiles/system \
-            --set /run/current-system
-
           # Prevents this from running on later boots.
           rm -f /nix-path-registration
         fi
