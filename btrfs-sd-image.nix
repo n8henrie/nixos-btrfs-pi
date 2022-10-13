@@ -1,20 +1,16 @@
 { pkgs }:
 let
   pkgsArm = import pkgs.path {
-    system = "aarch64-linux";
+    localSystem.system = "aarch64-linux";
   };
   pkgsCross = import pkgs.path {
-    system = "x86_64-linux";
-    crossSystem = {
-      config = "aarch64-unknown-linux-gnu";
-    };
+    localSystem.system = "x86_64-linux";
+    crossSystem.system = "aarch64-linux";
   };
 
   btrfspi = import (pkgs.path + "/nixos") {
     configuration = {
-      nixpkgs = {
-        system = "aarch64-linux";
-      };
+      nixpkgs.localSystem.system = "aarch64-linux";
       imports = [
         ./nixos/configuration-sample.nix
       ];
