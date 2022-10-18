@@ -144,7 +144,13 @@ pkgs.vmTools.runInLinuxVM
         mv "$img" $out/
       '';
       memSize = "4G";
-      QEMU_OPTS = "-drive format=raw,file=./btrfspi.iso,if=virtio,cache=unsafe,werror=report";
+      QEMU_OPTS = "-drive " + builtins.concatStringsSep "," [
+        "file=./btrfspi.iso"
+        "format=raw"
+        "if=virtio"
+        "cache=unsafe"
+        "werror=report"
+      ];
     } ''
 
   # NB: Don't set -f, as some of the builtin nix stuff depends on globbing
