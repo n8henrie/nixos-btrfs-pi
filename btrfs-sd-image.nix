@@ -11,6 +11,7 @@ let
   BTRFSDupData = false;
   bootFromBTRFS = true;
 
+  extraConfigTxt = [ "gpu_mem=16" ];
   btrfspi = import (pkgs.path + "/nixos") {
     configuration = {
       nixpkgs.localSystem.system = "aarch64-linux";
@@ -270,6 +271,8 @@ pkgs.vmTools.runInLinuxVM
   # Populate firmware files into FIRMWARE partition
   mount /dev/disk/by-label/${firmwarePartOpts.firmwarePartName} /tmp/firmware
   ${firmwarePartOpts.populateFirmwareCommands}
+
+  echo ${ pkgs.lib.concatStringsSep "\n" extraConfigTxt} >> /tmp/firmware/config.txt
 
   if [ ${ toString bootFromBTRFS } ]; then
     bootDest=/mnt/boot
