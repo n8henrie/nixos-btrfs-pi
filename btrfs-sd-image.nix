@@ -8,8 +8,8 @@ let
     crossSystem.system = "aarch64-linux";
   };
 
-  BTRFSDupData = true;
-  bootFromBTRFS = false;
+  BTRFSDupData = false;
+  bootFromBTRFS = true;
 
   btrfspi = import (pkgs.path + "/nixos") {
     configuration = {
