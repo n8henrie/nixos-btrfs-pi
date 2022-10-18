@@ -111,7 +111,7 @@ in
 pkgs.vmTools.runInLinuxVM
   (pkgs.runCommand "btrfspi-sd"
     {
-      enableParallelBuilding = true;
+      enableParallelBuildingByDefault = true;
       nativeBuildInputs =
         with pkgs;
         [
