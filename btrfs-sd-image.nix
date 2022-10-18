@@ -296,9 +296,9 @@ pkgs.vmTools.runInLinuxVM
   find /mnt/etc/nixos -name '*.nix' -exec chmod +w {} +
 
   export NIX_STATE_DIR=$TMPDIR/state
-  nix-store --load-db \
-    --option build-users-group "" \
-    < ${closure}/registration
+  nix-store < ${closure}/registration \
+    --load-db \
+    --option build-users-group ""
 
   cp ${closure}/registration /mnt/nix-path-registration
 
