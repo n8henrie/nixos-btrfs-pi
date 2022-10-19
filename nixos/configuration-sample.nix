@@ -52,10 +52,11 @@
     systemPackages = with pkgs; [
       compsize
       git
-      wget
-      tmux
-      neovim
       libraspberrypi
+      neovim
+      nixpkgs-fmt
+      tmux
+      wget
       # (import ./vim.nix)
       # (import ./nvim.nix)
     ];
