@@ -34,19 +34,8 @@
     loader = {
       grub.enable = false;
       generic-extlinux-compatible = {
-        enable = false;
-        configurationLimit = 20;
-      };
-      raspberryPi = {
         enable = true;
-        version = 3;
-        uboot = {
-          enable = true;
-          configurationLimit = 20;
-        };
-        firmwareConfig = ''
-          gpu_mem=16
-        '';
+        configurationLimit = 20;
       };
     };
   };
