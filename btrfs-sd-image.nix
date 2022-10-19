@@ -270,8 +270,10 @@ pkgs.vmTools.runInLinuxVM
   # All subvols should now be properly mounted at /mnt
   umount -R /btrfs
 
-  # Enabling compression (or COW?) prevents uboot from booting directly from
-  # BTRFS for some reason
+  # Enabling compression on /boot prevents uboot from booting directly from
+  # BTRFS for some reason. Instead of `chattr +C` could also use
+  # `btrfs property set /mnt/boot compression none` but this gets overridden by
+  # the `compress-force=zstd` (as opposed to `compress=zstd`) option
   chattr +C /mnt/boot
 
   # Populate firmware files into FIRMWARE partition
