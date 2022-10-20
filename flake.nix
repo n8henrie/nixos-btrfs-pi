@@ -5,12 +5,13 @@
   outputs = { self, nixpkgs, nixpkgsArm }:
     let
       system = "x86_64-linux";
+      armSystem = "aarch64-linux";
     in
     {
       packages.${system} =
         let
           pkgs = nixpkgs.legacyPackages.${system};
-          pkgsArm = nixpkgsArm.legacyPackages.${system};
+          pkgsArm = nixpkgsArm.legacyPackages.${armSystem};
         in
         {
           default =
@@ -19,7 +20,7 @@
             });
           runVm =
             let
-              pkgs = nixpkgs.legacyPackages.${system};
+              inherit pkgs;
               qemuImage = pkgs.stdenv.mkDerivation
                 {
                   name = "aarch64-qemu.img";
@@ -45,7 +46,7 @@
                 (import nixpkgs
                   {
                     localSystem.system = system;
-                    crossSystem.system = "aarch64-linux";
+                    crossSystem.system = armSystem;
                     inherit overlays;
                   }).pkgs.ubootRaspberryPi3_64bit;
 
