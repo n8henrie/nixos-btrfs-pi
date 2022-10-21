@@ -61,6 +61,10 @@
         inherit fsType device;
         options = opts ++ [ "subvol=@boot" ];
       };
+      "/gnu" = {
+        inherit fsType device;
+        options = opts ++ [ "subvol=@gnu" ];
+      };
       "/nix" = {
         inherit fsType device;
         options = opts ++ [ "subvol=@nix" ];
