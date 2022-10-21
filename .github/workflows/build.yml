@@ -30,7 +30,8 @@ jobs:
           name: nixos-btrfs-pi
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - run: |
-          nix build --max-jobs 4 --print-build-logs --show-trace
+          nix show-config | grep -vi -e keys -e token
+          nix build --print-build-logs --show-trace
           nix show-derivation ./result
       # Workaround for https://github.com/actions/upload-artifact/issues/92
       - run: echo "UPLOAD_PATH=$(readlink -f result)" >> $GITHUB_ENV
