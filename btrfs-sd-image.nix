@@ -57,9 +57,9 @@ let
   toplevel = btrfspi.config.system.build.toplevel;
   channelSources =
     let
-      nixpkgs = pkgs.lib.cleanSource pkgs.path;
+      nixpkgs = pkgsArm.lib.cleanSource pkgsArm.path;
     in
-    pkgs.runCommand "nixos-${btrfspi.config.system.nixos.version}" { } ''
+    pkgsArm.runCommand "nixos-${btrfspi.config.system.nixos.version}" { } ''
       mkdir -p $out
       cp -prd ${nixpkgs.outPath} $out/nixos
       chmod -R u+w $out/nixos
@@ -129,9 +129,9 @@ pkgs.vmTools.runInLinuxVM
       preVM = ''
         ${pkgs.vmTools.qemu}/bin/qemu-img create -f raw ./btrfspi.iso 8G
       '';
-      postVM = ''
+      postVM = with pkgs; ''
         # Truncate the file at the end of the last partition
-        PATH=${pkgs.util-linux}/bin:${pkgs.jq}/bin:$PATH
+        PATH=${util-linux}/bin:${jq}/bin:${zstd}/bin:$PATH
         img=./btrfspi.iso
 
         json=$(sfdisk --json --output end "$img")
@@ -142,8 +142,10 @@ pkgs.vmTools.runInLinuxVM
 
         truncate --size "$endbytes" "$img"
 
+        zstd --compress "$img"
+
         mkdir -p $out
-        mv "$img" $out/
+        mv "$img".zst $out/
       '';
       memSize = "4G";
       QEMU_OPTS = "-drive " + builtins.concatStringsSep "," [

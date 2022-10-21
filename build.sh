@@ -24,10 +24,10 @@ user_main() {
     tee build.log
 
   local result img
-  result=${1:-./result/btrfspi.iso}
+  result=${1:-./result/btrfspi.iso.zst}
   img=btrfspi.iso
 
-  cp "${result}" "${img}"
+  zstd --decompress "${result}" -o "${img}"
   chown "${USER}:${USER}" "${img}"
   chmod 0600 "${img}"
 
