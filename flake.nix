@@ -17,6 +17,9 @@
           default =
             (import ./btrfs-sd-image.nix {
               inherit pkgs;
+              bootFromBTRFS = true;
+              BTRFSDupData = false;
+              subvolumes = [ "@" "@boot" "@gnu" "@home" "@nix" "@snapshots" "@var" ];
             });
           runVm =
             let

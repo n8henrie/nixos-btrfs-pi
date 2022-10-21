@@ -1,4 +1,8 @@
-{ pkgs }:
+{ pkgs
+, bootFromBTRFS ? true
+, BTRFSDupData ? false
+, subvolumes ? [ "@" "@boot" "@gnu" "@home" "@nix" "@snapshots" "@var" ]
+}:
 let
   pkgsArm = import pkgs.path {
     localSystem.system = "aarch64-linux";
@@ -7,9 +11,6 @@ let
     localSystem.system = "x86_64-linux";
     crossSystem.system = "aarch64-linux";
   };
-
-  BTRFSDupData = false;
-  bootFromBTRFS = true;
 
   extraConfigTxt = [ "gpu_mem=16" ];
   btrfspi = import (pkgs.path + "/nixos") {
@@ -73,7 +74,6 @@ let
     rootPaths = [ toplevel channelSources ];
   };
 
-  subvolumes = [ "@" "@boot" "@gnu" "@home" "@nix" "@snapshots" "@var" ];
 
   firmwarePartOpts =
     let
@@ -107,6 +107,8 @@ let
       )
       (pkgs.lib.filterAttrs (n: _: pkgs.lib.strings.hasSuffix ".nix" n) (readDir dir)));
 in
+
+assert pkgs.lib.assertMsg (!(bootFromBTRFS && BTRFSDupData)) "bootFromBTRFS and BTRFSDupData are mutually exclusive";
 
 pkgs.vmTools.runInLinuxVM
   (pkgs.runCommand "btrfspi-sd"
