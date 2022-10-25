@@ -23,7 +23,6 @@ let
       boot.postBootCommands = with pkgsCross; ''
         # On the first boot do some maintenance tasks
         set -Eeuf -o pipefail
-        set -x
 
         if [ -f /nix-path-registration ]; then
           # Figure out device names for the boot device and root filesystem.
