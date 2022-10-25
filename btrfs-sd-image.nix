@@ -57,9 +57,9 @@ let
   toplevel = btrfspi.config.system.build.toplevel;
   channelSources =
     let
-      nixpkgs = pkgsArm.lib.cleanSource pkgsArm.path;
+      nixpkgs = pkgs.lib.cleanSource pkgs.path;
     in
-    pkgsArm.runCommand "nixos-${btrfspi.config.system.nixos.version}" { } ''
+    pkgs.runCommand "nixos-${btrfspi.config.system.nixos.version}" { } ''
       mkdir -p $out
       cp -prd ${nixpkgs.outPath} $out/nixos
       chmod -R u+w $out/nixos
