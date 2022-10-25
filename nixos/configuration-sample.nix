@@ -66,16 +66,18 @@
   };
 
   users = {
-    users.root = {
-      password = "nixos-btrfs";
-      openssh.authorizedKeys.keyFiles = [
-        (builtins.fetchurl {
-          url = "https://github.com/n8henrie.keys";
-          sha256 = "0f5zh39s2xdr6hw3i8q2p3yr713wjj5h7sljgxfkysfsrmf99ypb";
-        })
-      ];
-    };
     mutableUsers = false;
+    users = {
+      root = {
+        password = "nixos-btrfs";
+        openssh.authorizedKeys.keyFiles = [
+          (builtins.fetchurl {
+            url = "https://github.com/n8henrie.keys";
+            sha256 = "0f5zh39s2xdr6hw3i8q2p3yr713wjj5h7sljgxfkysfsrmf99ypb";
+          })
+        ];
+      };
+    };
   };
 
   i18n.supportedLocales = [ "en_US.UTF-8/UTF-8" ];
