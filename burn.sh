@@ -24,15 +24,25 @@ main() {
 
   local img outdev
   img=${1:-./result/btrfspi.iso}
+
   outdev=${OUTDEV:-"/dev/disk/by-id/usb-TS-RDF5_SD_Transcend_000000000039-0:0"}
   [[ -b "${outdev}" ]] || err "device not found: ${outdev}"
 
-  dd \
-    if="${img}" \
-    of="${outdev}" \
-    bs=4M \
-    status=progress \
-    conv=fsync
+  if [[ "${img}" =~ .*\.zst$ ]]; then
+    zstd --decompress --stdout "${img}" |
+      dd \
+        of="${outdev}" \
+        bs=4M \
+        status=progress \
+        conv=fsync
+  else
+    dd \
+      if="${img}" \
+      of="${outdev}" \
+      bs=4M \
+      status=progress \
+      conv=fsync
+  fi
   noti -m "burn done"
 }
 main "$@"

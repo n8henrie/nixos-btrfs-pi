@@ -27,6 +27,7 @@ user_main() {
   result=${1:-./result/btrfspi.iso.zst}
   img=btrfspi.iso
 
+  rm -f "${img}"
   zstd --decompress "${result}" -o "${img}"
   chown "${USER}:${USER}" "${img}"
   chmod 0600 "${img}"
@@ -48,7 +49,7 @@ user_main() {
 
   if [[ -z "${CI:-}" ]]; then
     # Don't fail if my SD card isn't present
-    sudo ./burn.sh ./result/btrfspi.iso || true
+    sudo ./burn.sh ./result/btrfspi.iso.zst || true
     noti -m "burn done"
   fi
 
