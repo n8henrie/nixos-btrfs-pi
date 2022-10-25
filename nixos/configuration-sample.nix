@@ -97,6 +97,10 @@
     autoUpgrade = {
       enable = true;
       allowReboot = true;
+      rebootWindow = {
+        upper = "03:00";
+        lower = "04:00";
+      };
     };
 
     # This value determines the NixOS release from which the default
