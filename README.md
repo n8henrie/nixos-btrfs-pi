@@ -5,79 +5,97 @@ root. I have been using these scripts from my Arch-based x86_64 server and they
 work pretty well. You can probably get a good idea of how to do the same on
 e.g. Ubuntu, but you're on your own with regards to QEMU and nix installation.
 
+I have a decent threadripper with plenty of ram and fairly slow internet; it
+takes my machine a little over an hour to build the image.
+
 ## Quickstart
 
 ```console
 $ sudo pacman -S nix
 $ yay -S qemu-user-static-bin
-$ echo 'extra-platforms = aarch64-linux' | sudo tee -a /etc/nix/nix.conf
-$ nix build \
-    --include nixos-config=./sd-image.nix \
-    --argstr system aarch64-linux \
-    --file '<nixpkgs/nixos>' \
-    --show-trace \
-    config.system.build.sdImage
+$ cat <<'EOF' | sudo tee -a /etc/nix/nix.conf
+extra-platforms = aarch64-linux
+experimental-features = nix-command flakes repl-flake
+max-jobs = auto
+cores = 0
+EOF
+$ sudo systemctl restart nix-daemon.service
+$ git clone https://github.com/n8henrie/nixos-btrfs-pi && cd nixos-btrfs-pi
+$ nix build
 ```
 
-This should give you `./result/sd-image/nixos-btrfs.img`
+This should give you `./result/btrfspi.img.zst`
 
-- Test run in QEMU: `./nixos.sh`
-    - You'll first need to `qemu-img resize`, which requires ownership
-    - You'll also need a copy of the `dtb` file and kernel
-    - I've scripted the above `nix build` step and starting QEMU in
-      `./build.sh`
+- Test run in QEMU:
+    - `nix build .#runVm && ./result`
+    - You can also look at `nixos.sh`, which works similarly, but requires:
+        - You'll first need to `qemu-img resize`, which requires ownership
+        - You'll also need a copy of the `dtb` file and kernel
+        - I've scripted builting + these steps into `build.sh`
     - In QEMU, I can't get the keyboard to work consistently (once in a blue
       moon via `device_add usb-host,hostbus=001,hostaddr=002`) or SSH to work
       at all
 - Burn to your sd card: `sudo ./burn.sh`
+    - To be save you might want to set your `OUTDEV` in `config.env` and source
+      this first
 - Boot it up
 
 ## Configuration
 
-If it boots, your next steps will be setting up your installation.
+This image is on BTRFS, using the subvolumes as specified in
+`btrfs-sd-image.nix`. The root subvolume is `@`, home is `@home`, etc.
 
-- I prefer to use a `@` root subvolume with several other subvolumes (which
-  help avoid shenanigans with snapshots taking up all available space)
-    - To customize your subvolume setup you'll likely need to make some changes
-      in `nixos/hardware-configuration.nix`:
-        - `filesystems`
-        - `kernelParams` (specifically `rootflags=subvol=@`)
-- To save me a lot of effort in setting up my subvolumes across the dozens of
-  times I re-ran this script, I added `customize-image.sh`, which will run
-  during `build.sh` if you `export CUSTOMIZE_NIX_IMAGE=1`; you'll have to look
-  through to see what it does exactly, to hopefully give you some ideas
-- A lot of this can be set up in nix (e.g. in `boot.postBootCommands` in
-  `sd-image-btrfs.nix`), but I didn't want to make my preferences default for
-  others that might find this useful
-- `customize_image.sh` also:
-    - copies over some utility scripts for post-boot, more info on them below:
-        - `mountsubvols.sh`
-        - `setup.sh`
-    - copies over my config from `./nixos` to the SD card's `/mnt/etc/nixos`
-    - copies over my SSH public key
-- This makes it fairly simple for me to burn the image, boot, ssh in, and then:
+The `FAT`-based `FIRMWARE` partition has important Raspberry Pi config files
+such as `config.txt` and can be mounted to its default location with `mount
+/boot/firmware`. To help protect these critical files it is not mounted by
+default.
 
-```console
-# ./setup.sh
-```
+### `bootFromBTRFS`
 
-Without using my setup script, it would look something like this:
+When `true`, this option puts the boot files into the `@boot` subvolume, which
+gets mounted at `/boot`. When `false`, the boot files go onto the `FAT`-based
+`FIRMWARE` partition. See the **Booting** section below for additional details.
 
-```console
-# echo "Make swapfile -- see setup.sh, you're on your own here"
-# nix-channel --update
-# nixos-install --root /
-# reboot
-```
+### `BTRFSDupData`
 
-Obviously on the next boot one would want to:
+This option runs `btrfs balance start -dconvert=DUP /` on the system's first
+boot, duplicating all data on the SD card. Please see the `DUP PROFILES ON A
+SINGLE DEVICE` section of `man mkfs.btrfs` for additional details; I'm not sure
+whether this would increase or harm the robustness of a NixOS system on an SD
+card.
 
-```console
-# nixos-rebuild switch
-# nixos-rebuild switch --upgrade
-```
+Please note that setting data to `DUP` seems to be incompatible with booting
+directly from BTRFS, so one must set `bootFromBTRFS` to `false`. (If you are
+booting from the `FAT` partition but did not set `BTRFSDupData` to true, you
+can choose to convert your data to `DUP` at any time.)
+
+## Booting
+
+By default this image has `@boot` mounted to `/boot` and the initrd and
+required boot files are installed there. It uses a patched u-boot that has
+support for BTRFS and zstd compression.
+
+Unfortunately, u-boot doesn't seem to work from a compressed subvolume for
+whatever reason; after over a year or work I've basically given up:
+
+- <https://lists.denx.de/pipermail/u-boot/2022-May/484855.html>
+- <https://discourse.nixos.org/t/btrfs-pi-wont-boot-from-compressed-subvolume/18462>
+
+For now, the workaround is to disable compression (and COW) via `chattr +C` on
+this subvolume. (You can also `btrfs property set /boot compression none`, but
+this gets overridden and breaks if one uses the `compress-force` mount option,
+where as `chattr +C` works even then).
+
+If anyone has other ideas on how I can get u-boot to boot from `@boot` without
+disabling compression, I'd be interested to hear about it.
 
 ## WIP / Known issues / Notes
+
+- I'd still love to figure out why I can't boot from my zstd-compressed `@boot`
+  BTRFS subvolume; seems like u-boot supports the right stuff
+- I'd like my channel to default to `nixos-22.05-aarch64`, but it *looks* like
+  it's just defaulting to `nixos-22.05`. [See
+  also](https://discourse.nixos.org/t/can-i-create-an-sdimage-with-a-preconfigured-default-channel/19593)
 
 ### Debugging
 
@@ -126,114 +144,13 @@ $ nix eval \
     bat
 ```
 
-#### BTRFS dup
-
-One of the reasons I like BTRFS on an RPi is the ability to set dup data on an
-SD card, which *might* be helpful for recovery in case of corruption (although
-it will also be causing twice as many writes, so maybe it's worse? Who knows --
-let me know if you do).
-
-`sudo btrfs balance start -dconvert=dup /`
-
-### u-boot with BTRFS root
-
-The *easy* way is to copy `/boot/nixos` and `/boot/extlinux` onto your
-FAT-based `/dev/disk/by-label/FIRMWARE` partition. This seems to work fine.
-
-However, it won't support all the fancy BTRFS features, and won't necessarily
-get updated (unless you update it manually).
-
-*AND*, it ends up that `u-boot` supports booting from BTRFS just fine! The
-`ubootRaspberryPi3_64bit` overlay in `sd-image.nix` seems to take care of that.
-It didn't seem to work at first, until I discovered that u-boot wanted the
-bootable flag to be set on the btrfs partition as well.
-
-*HOWEVER*, it seems that `u-boot` has trouble booting from a *subvolume*, and
-as I noted, I like subvolumes; in this case `@boot`. It looks for boot files in
-`/` and `/boot/`, configurable by `boot_prefixes`, and normally finds
-`/boot/extlinux/extlinux.conf` and goes from there.
-
-I can help `u-boot` find the necessary files if I run from the u-boot prompt:
-
-```
-setenv boot_prefixes / /boot/ /@/ /@boot/
-saveenv
-boot
-```
-
-(I only add `/@/` in case others want to keep `/boot` on their `@` subvolume.)
-
-At this point it goes into a boot loop where it *looks* like it's going to
-work, but not quite.
-
-**UPDATE 20220217**: I have subvolumes and booting from root subvolume working,
-had to modify uboot's `boot_prefixes`
-
-Currently it is *not* working if:
-- `/boot` is compressed (see `customize-image.sh` and
-  `hardware-configuration.nix`)
-
-### With compression *disabled* on these 3 subvols, all is well:
-
-- `@` (root)
-- `@boot`
-- `@nix`
-
-Doesn't seem to work with any of those compressed, even using u-boot's
-`CONFIG_ZSTD=y`.
-
-## UPDATE 20220609: With the latest push, BTRFS seems to be working with root
-subvolume and compression, including `@boot`. The key seems to have been:
-- pinning to `nixos-22.05` (now released)
-- pinning to the 5.18 kernel
-
-I'll go through this README for more updates soon.
-
-### [BTRFS related](BTRFS-related) errors
-
-Including but not limited to:
-
--     Error mounting ... mount(2)
-      system call failed: File exists
-- `ERROR: non-unique UUID`
-- `BTRFS error (device ...): open_ctree failed`
-
-I don't know. BTRFS is weird. There are some good SO threads, but a few
-recurring issues I noted:
-
-- The BTRFS part of the image is created from a directory using the `--shrink`
-  flag, which means there's not much room left for additions
-  - This is why I call `customize-image.sh` *after* `qemu-img resize` in
-    `build.sh`, since that likely gives it a little extra space
-- I guess in order to be more deterministic / reproducible, the UUID is
-  pre-specified. This confuses and upsets BTRFS sometimes. I was able to fix it
-  a few times by:
-  - Make sure no images are still mounted or dangling:
-    - `mount | grep loop`
-    - `losetup`
-  - `sudo btrfs device scan --forget` helps fix things, not sure if this is
-    dangerous (my Arch box is also BTRFS root and nothing seemed to break)
-  - When all else fails, reboot
-
-This was also helpful at some point:
-
-```
-setenv boot_syslinux_conf /@boot/extlinux/extlinux.conf
-```
-
-Prior to figuring out the `bootable` flag issue, this got things going:
-
-```
-setenv distro_bootpart 2
-boot
-```
-
 ## Overview of shell scripts in this repo
 
 - `inspect.sh`: Convenience script to set up loop devices which are then
   mounted to some temporary directories. Don't forget to `umount` and `losetup
   -D` afterwards
-- `nixos.sh`: Run qemu to see if the image boots
+- `nixos.sh`: Run qemu to see if the image boots (see also the `.#runVm` flake
+  output)
 - `copy-kernel.sh`: Convenience script to mount the image and copy the kernel
   locally for use with `nixos.sh`. Delete `./u-boot-rpi3.bin` to copy a fresh
   version next run.
@@ -248,65 +165,25 @@ boot
   time, then another time wrote everything out to a file named `/dev/sde` and
   couldn't figure out why the SD card wouldn't boot.
 - `dtbs/download.sh`: Not currently functional
-- `customize-image.sh`: Self explanatory, creates subvolumes and copies other
-  scripts to the image
-- `setup.sh`: a convenience script to make swapfile (since certain builds die
-  OOM without swap, and swap on BTRFS requires some special configuration),
-  update nix-channel, nixos-install, and reboot all in one go
 
 NB: I've given myself `NOPASSWD` permissions to run the following so that I can
 fire and forget `./build.sh`:
 
-- `customize-image.sh`
+- `burn.sh`
 - `copy-kernel.sh`
-- `rebuild.sh`
 - `inspect.sh`
+- `rebuild.sh`
 
 ## License
 
 My changes and modifications are MIT as per `/LICENSE`, to the extent
 permitted.
 
-Substantial portions of this project were copied from work by `c00w` on the
-NixOS forums:
-<https://discourse.nixos.org/t/raspberry-pi-nixos-on-btrfs-root/14081/11>; he
-included a similarly permissive license
-[here](https://git.sr.ht/~c00w/useful-nixos-aarch64/tree/pi4bbtrfs/item/pi4bbtrfs/LICENSE).
+Substantial portions of this project were copied from:
+
+- <https://gist.github.com/lheckemann/f265f155e9e7a7d05028eacfa6e96114>
+- <https://discourse.nixos.org/t/raspberry-pi-nixos-on-btrfs-root/14081/11>
 
 ## Learning Resources
 
 - https://github.com/lucernae/nixos-pi/blob/main/README.md
-
-### Scratchpad
-
-```console
-$ nix build \
-    --dry-run \
-    --file '<nixpkgs>' \
-    --argstr defconfig rpi_3_defconfig \
-    --arg extraMeta.platforms '["aarch64-linux"]' \
-    --arg filesToInstall '["u-boot.bin"]' \
-    --argstr extraConfig '
-        CONFIG_CMD_BTRFS=y
-        CONFIG_ZSTD=y
-        CONFIG_BOOTCOMMAND="setenv boot_prefixes / /boot/ /@/ /@boot/; run distro_bootcmd;"
-        ' \
-    pkgsCross.aarch64-multiplatform.buildUBoot
-```
-
-
-```console
-$ nix build \
-    --file '<nixpkgs>' pkgsCross.aarch64-multiplatform.buildUBoot \
-    --argstr defconfig rpi_3_defconfig \
-    --arg filesToInstall '["u-boot.bin"]' \
-    --arg extraMeta.platforms '["aarch64-linux"]' \
-    --argstr extraConfig '
-CONFIG_CMD_BTRFS=y
-CONFIG_ZSTD=y
-CONFIG_BOOTCOMMAND="setenv boot_prefixes / /boot/ /@/ /@boot/; run distro_bootcmd;"
-'
-$ grep -ci BTRFS result/u-boot.bin
-80
-$ # adding CONFIG_FS_BTRFS results in an idental u-boot.bin
-```
