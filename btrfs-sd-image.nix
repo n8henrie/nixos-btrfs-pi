@@ -209,6 +209,7 @@ pkgs.vmTools.runInLinuxVM
     )
 
     echo ",$sizeInK" | sfdisk -N"$partNum" "$blockDev"
+    ${pkgs.udev}/bin/udevadm settle
   }
 
   ${pkgs.kmod}/bin/modprobe btrfs
