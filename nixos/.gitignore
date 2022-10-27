@@ -3,3 +3,4 @@
 !configuration-sample.nix
 !hardware-configuration.nix
 !inputrc.nix
+!flake.nix
