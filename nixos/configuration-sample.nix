@@ -83,6 +83,7 @@
   i18n.supportedLocales = [ "en_US.UTF-8/UTF-8" ];
 
   nix = {
+    nixPath = [ "https://nixos.org/channels/nixos-22.05-aarch64" ];
     settings = {
       max-jobs = "auto";
       auto-optimise-store = true;
