@@ -41,6 +41,6 @@ jobs:
           path: ${{ env.UPLOAD_PATH }}
       - name: Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: ${{ env.UPLOAD_PATH }}
