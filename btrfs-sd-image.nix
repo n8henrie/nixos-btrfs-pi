@@ -269,6 +269,7 @@ pkgs.vmTools.runInLinuxVM
     mkdir -p "$dest"
     mount -t btrfs -o "$btrfsopts,subvol=$sv" /dev/disk/by-label/NIXOS_SD "$dest"
   done
+  mkdir -p /mnt/boot/firmware
 
   # All subvols should now be properly mounted at /mnt
   umount -R /btrfs
@@ -293,12 +294,9 @@ pkgs.vmTools.runInLinuxVM
 
   ${firmwarePartOpts.populateCmd} -c ${toplevel} -d "$bootDest" -g 0
 
-  mkdir -p /mnt/{etc/nixos,boot/firmware}
   for config in ${toString (configFiles ./nixos)}; do
-    cp -a "$config"/share/. /mnt/etc/nixos
+    install -Dm0644 -t /mnt/etc/nixos "$config"/share/*
   done
-  # These are read-only in the store; make them writable again
-  find /mnt/etc/nixos -name '*.nix' -exec chmod +w {} +
 
   export NIX_STATE_DIR=$TMPDIR/state
   nix-store < ${closure}/registration \
