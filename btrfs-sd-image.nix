@@ -316,8 +316,7 @@ pkgs.vmTools.runInLinuxVM
     --no-bootloader \
     --substituters "" \
     --option build-users-group "" \
-    --system ${toplevel} \
-    --channel ${channelSources}
+    --system ${toplevel}
 
   shrinkBTRFSFs /mnt
 
