@@ -121,7 +121,6 @@ pkgs.vmTools.runInLinuxVM
           e2fsprogs
           nix # mv, cp
           util-linux # sfdisk
-          btrfspi.config.system.build.nixos-enter
           btrfspi.config.system.build.nixos-install
         ];
 
