@@ -57,8 +57,8 @@
       nixpkgs-fmt
       tmux
       wget
-      # (import ./vim.nix)
-      # (import ./nvim.nix)
+      # (import ./vim.nix { inherit pkgs; })
+      # (import ./nvim.nix { inherit pkgs; })
     ];
     variables = {
       EDITOR = "nvim";
