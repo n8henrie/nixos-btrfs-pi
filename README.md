@@ -6,7 +6,7 @@ work pretty well. You can probably get a good idea of how to do the same on
 e.g. Ubuntu, but you're on your own with regards to QEMU and nix installation.
 
 I have a decent threadripper with plenty of ram and fairly slow internet; it
-takes my machine a little over an hour to build the image.
+takes my machine about 20 minutes to build the image.
 
 ## Quickstart
 
