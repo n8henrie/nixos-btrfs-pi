@@ -25,7 +25,7 @@
       "console=ttyS0,115200n8"
       "console=ttyAMA0,115200n8"
       "console=tty0"
-      "root=/dev/mmcblk0p2"
+      "root=/dev/disk/by-label/NIXOS_SD"
       "rootfstype=btrfs"
       "rootflags=subvol=@"
       "rootwait"
