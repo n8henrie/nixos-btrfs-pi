@@ -21,6 +21,7 @@ main() {
     sudo "$0" "$@"
     exit $?
   fi
+  source config.env
 
   local img outdev
   img=${1:-./result/btrfspi.iso}
