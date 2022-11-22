@@ -92,8 +92,9 @@
   system = {
     autoUpgrade = {
       enable = true;
-      allowReboot = true;
       flake = "/etc/nixos";
+      dates = "02:00";
+      allowReboot = true;
       rebootWindow = {
         upper = "03:00";
         lower = "04:00";
