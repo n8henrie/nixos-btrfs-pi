@@ -17,11 +17,7 @@
     wireless = {
       enable = true;
       interfaces = [ "wlan0" ];
-      networks = {
-        "MyWifi" = {
-          pskRaw = "totally Real";
-        };
-      };
+      networks = { };
     };
   };
 
