@@ -15,7 +15,55 @@ cleanup() {
 
 trap cleanup INT TERM ERR
 
+cli() {
+  local arg
+  for arg; do
+    case "${arg}" in
+      --)
+        shift
+        break
+        ;;
+      -h | --help)
+        help
+        exit 0
+        ;;
+      --no-burn)
+        burn=""
+        ;;
+      --vm)
+        run_vm=1
+        ;;
+      -?*)
+        err "Unknown option: $1"
+        ;;
+      *)
+        break
+        ;;
+    esac
+    shift
+  done
+}
+
+log() {
+  printf '%s :: %s\n' "$(date)" "$*" > /dev/stderr
+}
+
+err() {
+  log "$*"
+  exit 1
+}
+
+help() {
+  cat << EOF
+Usage:
+  ./build.sh [--vm] [--no-burn]
+EOF
+}
+
 user_main() {
+  local run_vm="" burn=1
+  cli "$@"
+
   [[ -r ./config.env ]] && source ./config.env
   time nix build \
     --option keep-outputs true \
@@ -24,7 +72,7 @@ user_main() {
     tee build.log
 
   local result img
-  result=${1:-./result/btrfspi.iso.zst}
+  result=./result/btrfspi.iso.zst
   img=btrfspi.iso
 
   rm -f "${img}"
@@ -47,13 +95,22 @@ user_main() {
 
   sudo ./copy-kernel.sh "${img}"
 
-  if [[ -z "${CI:-}" ]]; then
-    # Don't fail if my SD card isn't present
-    sudo ./burn.sh ./result/btrfspi.iso.zst || true
-    noti -m "burn done"
+  if [[ -n "${CI:-}" ]]; then
+    burn=""
+    run_vm=""
   fi
 
-  ./nixos.sh "${img}"
+  if [[ -n "${burn}" ]]; then
+    # Don't fail if my SD card isn't present
+    sudo ./burn.sh ./result/btrfspi.iso.zst || true
+
+    # Dont' fail if user doesn't have noti set up
+    noti -m "burn done" || true
+  fi
+
+  if [[ -n "${run_vm}" ]]; then
+    ./nixos.sh "${img}"
+  fi
 }
 
 main() {
@@ -62,12 +119,12 @@ main() {
     exit $?
   fi
 
-  export -f user_main
+  export -f cli err help log user_main
   sudo -u "${SUDO_USER:-}" bash << EOF
   set -Eeuf -o pipefail
   set -x
-  $(declare -f user_main)
-  user_main
+  $(declare -f cli err help log user_main)
+  user_main "$@"
 EOF
 
 }
