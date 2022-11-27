@@ -78,6 +78,7 @@
 
   i18n.supportedLocales = [ "en_US.UTF-8/UTF-8" ];
 
+  nixpkgs.config.allowUnfree = true;
   nix = {
     # Disable nix channel lookups, use flakes instead
     nixPath = [ ];
