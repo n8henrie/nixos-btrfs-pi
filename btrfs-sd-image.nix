@@ -119,6 +119,7 @@ pkgs.vmTools.runInLinuxVM
           btrfs-progs
           dosfstools
           e2fsprogs
+          git # initialize repo at `/etc/nixos`
           nix # mv, cp
           util-linux # sfdisk
           btrfspi.config.system.build.nixos-install
@@ -315,6 +316,18 @@ pkgs.vmTools.runInLinuxVM
     --substituters "" \
     --option build-users-group "" \
     --system ${toplevel}
+
+  # Disable automatic creation of a default nix channel
+  # See also `nix-daemon.nix`
+  mkdir -p /mnt/root
+  touch /mnt/root/.nix-channels
+
+  # Initialize a repo to keep track of config changes and automatic flake input
+  # updates
+  pushd /mnt/etc/nixos
+  git init
+  git add .
+  popd
 
   shrinkBTRFSFs /mnt
 

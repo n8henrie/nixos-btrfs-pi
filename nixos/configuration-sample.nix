@@ -79,6 +79,8 @@
   i18n.supportedLocales = [ "en_US.UTF-8/UTF-8" ];
 
   nix = {
+    # Disable nix channel lookups, use flakes instead
+    nixPath = [ ];
     settings = {
       max-jobs = "auto";
       auto-optimise-store = true;
@@ -93,6 +95,11 @@
     autoUpgrade = {
       enable = true;
       flake = "/etc/nixos";
+      flags = [
+        "--update-input"
+        "nixpkgs"
+        "--commit-lock-file"
+      ];
       dates = "02:00";
       allowReboot = true;
       rebootWindow = {
