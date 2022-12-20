@@ -1,6 +1,6 @@
 {
   description = "RPi3 on BTRFS root";
-  inputs.nixpkgs.url = "nixpkgs/nixos-22.05-aarch64";
+  inputs.nixpkgs.url = "nixpkgs/nixos-22.11";
   outputs =
     { self
     , nixpkgs
