@@ -93,9 +93,6 @@ disabling compression, I'd be interested to hear about it.
 
 - I'd still love to figure out why I can't boot from my zstd-compressed `@boot`
   BTRFS subvolume; seems like u-boot supports the right stuff
-- I'd like my channel to default to `nixos-22.05-aarch64`, but it *looks* like
-  it's just defaulting to `nixos-22.05`. [See
-  also](https://discourse.nixos.org/t/can-i-create-an-sdimage-with-a-preconfigured-default-channel/19593)
 - I spent a good while putting together a flake that would use
   `nixos-generators` to create a standard sdImage based on
   `nixos/configuration-sample.nix` (which includes BTRFS kernel modules), use
