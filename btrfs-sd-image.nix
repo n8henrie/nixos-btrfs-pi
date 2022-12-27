@@ -252,8 +252,8 @@ pkgs.vmTools.runInLinuxVM
     --uuid "44444444-4444-4444-8888-888888888889" \
     /dev/vda2
 
+  ${pkgs.udev}/bin/udevadm trigger
   ${pkgs.udev}/bin/udevadm settle
-  blockdev --rereadpt /dev/vda
 
   mkdir -p /mnt /btrfs /tmp/firmware
 
