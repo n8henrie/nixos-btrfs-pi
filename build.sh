@@ -65,7 +65,8 @@ user_main() {
   cli "$@"
 
   [[ -r ./config.env ]] && source ./config.env
-  time nix build \
+  time GC_DONT_GC=1 \
+    nix build \
     --option keep-outputs true \
     --print-build-logs \
     --show-trace |&
