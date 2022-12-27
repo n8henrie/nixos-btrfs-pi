@@ -33,10 +33,10 @@ jobs:
           nix show-config | grep -vi -e keys -e token
           nix build --print-build-logs --show-trace
           nix show-derivation ./result
+        env:
+          GC_DONT_GC: 1
       # Workaround for https://github.com/actions/upload-artifact/issues/92
       - run: echo "UPLOAD_PATH=$(readlink -f result)" >> $GITHUB_ENV
-      - env:
-          GC_DONT_GC: 1
       - uses: actions/upload-artifact@v3
         with:
           name: btrfspi
