@@ -253,6 +253,7 @@ pkgs.vmTools.runInLinuxVM
     /dev/vda2
 
   ${pkgs.udev}/bin/udevadm settle
+  blockdev --rereadpt /dev/vda
 
   mkdir -p /mnt /btrfs /tmp/firmware
 
