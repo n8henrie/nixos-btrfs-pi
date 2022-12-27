@@ -12,7 +12,11 @@ let
     crossSystem.system = "aarch64-linux";
   };
 
-  extraConfigTxt = [ "gpu_mem=16" ];
+  extraConfigTxt = [
+    "gpu_mem=16"
+    "program_usb_boot_mode=1"
+    "program_usb_boot_timeout=1"
+  ];
   btrfspi = import (pkgs.path + "/nixos") {
     configuration = {
       nixpkgs.localSystem.system = "aarch64-linux";
