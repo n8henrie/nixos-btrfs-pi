@@ -15,7 +15,7 @@
     };
     firewall.enable = false;
     wireless = {
-      enable = false;
+      enable = true;
       interfaces = [ "wlan0" ];
       networks = { };
     };
