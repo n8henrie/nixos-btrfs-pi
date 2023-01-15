@@ -290,7 +290,7 @@ pkgs.vmTools.runInLinuxVM
   mount /dev/disk/by-label/${firmwarePartOpts.firmwarePartName} /tmp/firmware
   ${firmwarePartOpts.populateFirmwareCommands}
 
-  echo ${ pkgs.lib.concatStringsSep "\n" extraConfigTxt} >> /tmp/firmware/config.txt
+  echo "${ pkgs.lib.concatStringsSep "\n" extraConfigTxt}" >> /tmp/firmware/config.txt
 
   if [ ${ toString bootFromBTRFS } ]; then
     bootDest=/mnt/boot
