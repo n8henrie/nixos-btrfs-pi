@@ -35,7 +35,7 @@
       "rootflags=subvol=@"
       "rootwait"
     ];
-    initrd.kernelModules = [ "zstd" "btrfs" ];
+    initrd.kernelModules = ["zstd" "btrfs"];
     loader = {
       grub.enable = false;
       generic-extlinux-compatible = {
@@ -45,53 +45,51 @@
     };
   };
 
-  fileSystems =
-    let
-      opts = [
-        "noatime"
-        "ssd_spread"
-        "autodefrag"
-        "discard=async"
-        "compress-force=zstd"
-      ];
-      fsType = "btrfs";
-      device = "/dev/disk/by-label/NIXOS_SD";
-    in
-    {
-      "/" = {
-        inherit fsType device;
-        options = opts ++ [ "subvol=@" ];
-      };
-      "/boot" = {
-        inherit fsType device;
-        options = opts ++ [ "subvol=@boot" ];
-      };
-      "/gnu" = {
-        inherit fsType device;
-        options = opts ++ [ "subvol=@gnu" ];
-      };
-      "/nix" = {
-        inherit fsType device;
-        options = opts ++ [ "subvol=@nix" ];
-      };
-      "/var" = {
-        inherit fsType device;
-        options = opts ++ [ "subvol=@var" ];
-      };
-      "/home" = {
-        inherit fsType device;
-        options = opts ++ [ "subvol=@home" ];
-      };
-      "/.snapshots" = {
-        inherit fsType device;
-        options = opts ++ [ "subvol=@snapshots" ];
-      };
-      "/boot/firmware" = {
-        device = "/dev/disk/by-label/FIRMWARE";
-        fsType = "vfat";
-        options = [ "nofail" "noauto" ];
-      };
+  fileSystems = let
+    opts = [
+      "noatime"
+      "ssd_spread"
+      "autodefrag"
+      "discard=async"
+      "compress-force=zstd"
+    ];
+    fsType = "btrfs";
+    device = "/dev/disk/by-label/NIXOS_SD";
+  in {
+    "/" = {
+      inherit fsType device;
+      options = opts ++ ["subvol=@"];
     };
+    "/boot" = {
+      inherit fsType device;
+      options = opts ++ ["subvol=@boot"];
+    };
+    "/gnu" = {
+      inherit fsType device;
+      options = opts ++ ["subvol=@gnu"];
+    };
+    "/nix" = {
+      inherit fsType device;
+      options = opts ++ ["subvol=@nix"];
+    };
+    "/var" = {
+      inherit fsType device;
+      options = opts ++ ["subvol=@var"];
+    };
+    "/home" = {
+      inherit fsType device;
+      options = opts ++ ["subvol=@home"];
+    };
+    "/.snapshots" = {
+      inherit fsType device;
+      options = opts ++ ["subvol=@snapshots"];
+    };
+    "/boot/firmware" = {
+      device = "/dev/disk/by-label/FIRMWARE";
+      fsType = "vfat";
+      options = ["nofail" "noauto"];
+    };
+  };
 
   zramSwap = {
     enable = true;
@@ -99,6 +97,7 @@
     algorithm = "zstd";
   };
 
-  powerManagement.cpuFreqGovernor = lib.mkDefault
+  powerManagement.cpuFreqGovernor =
+    lib.mkDefault
     "ondemand";
 }

@@ -1,5 +1,9 @@
-{ config, pkgs, lib, ... }:
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
   imports = [
     ./inputrc.nix
     ./hardware-configuration.nix
@@ -16,8 +20,8 @@
     firewall.enable = false;
     wireless = {
       enable = true;
-      interfaces = [ "wlan0" ];
-      networks = { };
+      interfaces = ["wlan0"];
+      networks = {};
     };
   };
 
@@ -41,8 +45,8 @@
   };
 
   systemd.services = {
-    wpa_supplicant.wantedBy = lib.mkOverride 10 [ "default.target" ];
-    sshd.wantedBy = lib.mkOverride 40 [ "multi-user.target" ];
+    wpa_supplicant.wantedBy = lib.mkOverride 10 ["default.target"];
+    sshd.wantedBy = lib.mkOverride 40 ["multi-user.target"];
   };
 
   environment = {
@@ -77,12 +81,12 @@
     };
   };
 
-  i18n.supportedLocales = [ "en_US.UTF-8/UTF-8" ];
+  i18n.supportedLocales = ["en_US.UTF-8/UTF-8"];
 
   nixpkgs.config.allowUnfree = true;
   nix = {
     # Disable nix channel lookups, use flakes instead
-    nixPath = [ ];
+    nixPath = [];
     settings = {
       max-jobs = "auto";
       auto-optimise-store = true;
