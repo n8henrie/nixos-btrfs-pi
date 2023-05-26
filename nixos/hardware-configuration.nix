@@ -1,21 +1,26 @@
-{ lib, pkgs, modulesPath, ... }:
 {
-  imports =
-    [
-      (modulesPath + "/installer/scan/not-detected.nix")
-    ];
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}: {
+  imports = [
+    (modulesPath + "/installer/scan/not-detected.nix")
+  ];
 
-  nixpkgs.overlays = [
+  nixpkgs.overlays = let
+    ubootWithBtrfsAndZstd = oldAttrs: {
+      extraConfig = ''
+        CONFIG_CMD_BTRFS=y
+        CONFIG_ZSTD=y
+
+        CONFIG_BOOTCOMMAND="setenv boot_prefixes / /boot/ /@/ /@boot/; run distro_bootcmd;"
+      '';
+    };
+  in [
     (self: super: {
-      ubootRaspberryPi3_64bit = super.ubootRaspberryPi3_64bit.overrideAttrs
-        (oldAttrs: {
-          extraConfig = ''
-            CONFIG_CMD_BTRFS=y
-            CONFIG_ZSTD=y
-
-            CONFIG_BOOTCOMMAND="setenv boot_prefixes / /boot/ /@/ /@boot/; run distro_bootcmd;"
-          '';
-        });
+      ubootRaspberryPi3_64bit = super.ubootRaspberryPi3_64bit.overrideAttrs ubootWithBtrfsAndZstd;
+      ubootRaspberryPi4_64bit = super.ubootRaspberryPi4_64bit.overrideAttrs ubootWithBtrfsAndZstd;
     })
   ];
 

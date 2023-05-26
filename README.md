@@ -1,9 +1,10 @@
-# Building a BTRFS-root NixOS on a Raspberry Pi 3
+# Building a BTRFS-root NixOS on a Raspberry Pi 3 or 4
 
-This repo contains tools to build an image for a Raspberry Pi 3 on a BTRFS
-root. I have been using these scripts from my Arch-based x86_64 server and they
-work pretty well. You can probably get a good idea of how to do the same on
-e.g. Ubuntu, but you're on your own with regards to QEMU and nix installation.
+This repo contains tools to build an image for a Raspberry Pi 3 or 4 on a BTRFS
+root. I have been using these scripts to build from my Arch-based x86_64 server
+and they work pretty well. You can probably get a good idea of how to do the
+same on e.g. Ubuntu, but you're on your own with regards to QEMU and nix
+installation.
 
 I have a decent threadripper with plenty of ram and fairly slow internet; it
 takes my machine about 20 minutes to build the image.
