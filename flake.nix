@@ -24,15 +24,16 @@
             {
               localSystem.system = system;
               crossSystem.system = armSystem;
-              overlays =
-                (import ./nixos/hardware-configuration.nix
+              inherit
+                ((import ./nixos/hardware-configuration.nix
                   {
+                    inherit (pkgsArm) lib;
                     pkgs = pkgsArm;
-                    lib = pkgsArm.lib;
                     modulesPath = pkgsArm.path + "/nixos/modules";
                   })
-                .nixpkgs
-                .overlays;
+                .nixpkgs)
+                overlays
+                ;
             })
           .pkgs
           .ubootRaspberryPi3_64bit;

@@ -57,7 +57,7 @@
     };
   };
 
-  toplevel = btrfspi.config.system.build.toplevel;
+  inherit (btrfspi.config.system.build) toplevel;
   channelSources = let
     nixpkgs = pkgs.lib.cleanSource pkgs.path;
   in
@@ -81,25 +81,28 @@
       inherit (btrfspi) pkgs config;
       inherit (btrfspi.pkgs) lib;
     };
-    sdImage = (import (pkgsCross.path + "/nixos/modules/installer/sd-card/sd-image.nix") opts).options.sdImage;
+    inherit ((import (pkgsCross.path + "/nixos/modules/installer/sd-card/sd-image.nix") opts).options) sdImage;
     sdImageAarch64 = import (pkgsCross.path + "/nixos/modules/installer/sd-card/sd-image-aarch64.nix");
   in {
     firmwarePartID = sdImage.firmwarePartitionID.default;
     firmwarePartName = sdImage.firmwarePartitionName.default;
-    populateFirmwareCommands = (sdImageAarch64 opts).sdImage.populateFirmwareCommands;
+    inherit ((sdImageAarch64 opts).sdImage) populateFirmwareCommands;
 
-    populateCmd =
-      (import (pkgs.path + "/nixos/modules/system/boot/loader/generic-extlinux-compatible") {
-        inherit pkgs;
-        config = btrfspi.config;
-        lib = pkgs.lib;
-      })
-      .config
-      .content
-      .boot
-      .loader
-      .generic-extlinux-compatible
-      .populateCmd;
+    inherit
+      (
+        (import (pkgs.path + "/nixos/modules/system/boot/loader/generic-extlinux-compatible") {
+          inherit pkgs;
+          inherit (pkgs) lib;
+          inherit (btrfspi) config;
+        })
+        .config
+        .content
+        .boot
+        .loader
+        .generic-extlinux-compatible
+      )
+      populateCmd
+      ;
   };
 
   # Take contents of ./nixos/*.nix and make list of derivations
