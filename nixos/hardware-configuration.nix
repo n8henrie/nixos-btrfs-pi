@@ -14,7 +14,7 @@
         CONFIG_CMD_BTRFS=y
         CONFIG_ZSTD=y
 
-        CONFIG_BOOTCOMMAND="setenv boot_prefixes / /boot/ /@/ /@boot/; run distro_bootcmd;"
+        CONFIG_BOOTCOMMAND="setenv boot_prefixes /@boot/ /@/ /boot/ /; run distro_bootcmd;"
       '';
     };
   in [
