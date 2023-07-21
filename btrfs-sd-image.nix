@@ -1,8 +1,10 @@
 {
   pkgs,
+  inputs,
   bootFromBTRFS ? true,
   BTRFSDupData ? false,
   subvolumes ? ["@" "@boot" "@gnu" "@home" "@nix" "@snapshots" "@var"],
+  piVersion ? 3,
 }: let
   pkgsArm = import pkgs.path {
     localSystem.system = "aarch64-linux";
@@ -17,44 +19,50 @@
     "program_usb_boot_mode=1"
     "program_usb_boot_timeout=1"
   ];
-  btrfspi = import (pkgs.path + "/nixos") {
-    configuration = {
-      nixpkgs.localSystem.system = "aarch64-linux";
-      imports = [
-        ./nixos/configuration-sample.nix
-      ];
 
-      boot.postBootCommands = with pkgsCross; ''
-        # On the first boot do some maintenance tasks
-        set -Eeuf -o pipefail
+  btrfspi = import (pkgs.path + "/nixos/lib/eval-config.nix") {
+    system = "aarch64-linux";
+    specialArgs = {inherit inputs;};
+    modules = [
+      {
+        imports =
+          [
+            ./nixos/configuration-sample.nix
+          ]
+          ++ pkgs.lib.optional (piVersion == 4) inputs.nixos-hardware.nixosModules.raspberry-pi-4;
 
-        if [ -f /nix-path-registration ]; then
-          # Figure out device names for the boot device and root filesystem.
-          rootPart=$(${pkgsArm.util-linux}/bin/findmnt -nvo SOURCE /)
-          firmwareDevice=$(lsblk -npo PKNAME $rootPart)
-          partNum=$(
-            lsblk -npo MAJ:MIN "$rootPart" |
-            ${gawk}/bin/awk -F: '{print $2}' |
-            tr -d '[:space:]'
-          )
+        boot.postBootCommands = with pkgsCross; ''
+          # On the first boot do some maintenance tasks
+          set -Eeuf -o pipefail
 
-          # Resize the root partition and the filesystem to fit the disk
-          echo ',+,' | sfdisk -N"$partNum" --no-reread "$firmwareDevice"
-          ${parted}/bin/partprobe
-          ${btrfs-progs}/bin/btrfs filesystem resize max /
+          if [ -f /nix-path-registration ]; then
+            # Figure out device names for the boot device and root filesystem.
+            rootPart=$(${pkgsArm.util-linux}/bin/findmnt -nvo SOURCE /)
+            firmwareDevice=$(lsblk -npo PKNAME $rootPart)
+            partNum=$(
+              lsblk -npo MAJ:MIN "$rootPart" |
+              ${gawk}/bin/awk -F: '{print $2}' |
+              tr -d '[:space:]'
+            )
 
-          if [ ${toString BTRFSDupData} ]; then
-            ${btrfs-progs}/bin/btrfs balance start -dconvert=DUP /
+            # Resize the root partition and the filesystem to fit the disk
+            echo ',+,' | sfdisk -N"$partNum" --no-reread "$firmwareDevice"
+            ${parted}/bin/partprobe
+            ${btrfs-progs}/bin/btrfs filesystem resize max /
+
+            if [ ${toString BTRFSDupData} ]; then
+              ${btrfs-progs}/bin/btrfs balance start -dconvert=DUP /
+            fi
+
+            # Register the contents of the initial Nix store
+            ${btrfspi.config.nix.package.out}/bin/nix-store --load-db < /nix-path-registration
+
+            # Prevents this from running on later boots.
+            rm -f /nix-path-registration
           fi
-
-          # Register the contents of the initial Nix store
-          ${btrfspi.config.nix.package.out}/bin/nix-store --load-db < /nix-path-registration
-
-          # Prevents this from running on later boots.
-          rm -f /nix-path-registration
-        fi
-      '';
-    };
+        '';
+      }
+    ];
   };
 
   inherit (btrfspi.config.system.build) toplevel;

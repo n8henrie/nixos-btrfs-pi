@@ -1,5 +1,4 @@
 {
-  config,
   pkgs,
   lib,
   ...
@@ -38,7 +37,7 @@
     };
     openssh = {
       enable = true;
-      permitRootLogin = "yes";
+      settings.PermitRootLogin = "yes";
     };
     fstrim.enable = true;
     nscd.enableNsncd = true;
@@ -74,7 +73,7 @@
         openssh.authorizedKeys.keyFiles = [
           (builtins.fetchurl {
             url = "https://github.com/n8henrie.keys";
-            sha256 = "0f5zh39s2xdr6hw3i8q2p3yr713wjj5h7sljgxfkysfsrmf99ypb";
+            sha256 = "1bhfxj9jlzqfvkz1j7bmqlzskcgali36ans7ajjgn0zc1998kqs9";
           })
         ];
       };

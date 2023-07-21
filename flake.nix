@@ -1,23 +1,50 @@
 {
   description = "sdimage for RPi3 on BTRFS root";
-  inputs.nixpkgs.url = "nixpkgs/nixos-22.11";
+  inputs = {
+    nixpkgs.url = "nixpkgs/nixos-23.05";
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+  };
   outputs = {
     self,
     nixpkgs,
-  }: let
+    ...
+  } @ inputs: let
     system = "x86_64-linux";
     armSystem = "aarch64-linux";
   in {
     packages.${system} = let
       pkgs = nixpkgs.legacyPackages.${system};
       pkgsArm = nixpkgs.legacyPackages.${armSystem};
+      ubootPkgs =
+        (import nixpkgs
+          {
+            localSystem.system = system;
+            crossSystem.system = armSystem;
+            inherit
+              ((import ./nixos/hardware-configuration.nix
+                {
+                  inherit (pkgsArm) lib;
+                  pkgs = pkgsArm;
+                  modulesPath = pkgsArm.path + "/nixos/modules";
+                })
+              .nixpkgs)
+              overlays
+              ;
+          })
+        .pkgs;
+      btrfsPi = {piVersion ? 3}:
+        import ./btrfs-sd-image.nix {
+          inherit inputs pkgs piVersion;
+          bootFromBTRFS = true;
+          BTRFSDupData = false;
+          subvolumes = ["@" "@boot" "@gnu" "@home" "@nix" "@snapshots" "@var"];
+        };
     in {
-      default = import ./btrfs-sd-image.nix {
-        inherit pkgs;
-        bootFromBTRFS = true;
-        BTRFSDupData = false;
-        subvolumes = ["@" "@boot" "@gnu" "@home" "@nix" "@snapshots" "@var"];
-      };
+      default = self.outputs.btrfsPi3;
+      btrfsPi3 = btrfsPi {};
+      btrfsPi4 = btrfsPi {piVersion = 4;};
+      uboot3 = ubootPkgs.ubootRaspberryPi3_64bit;
+      uboot4 = ubootPkgs.ubootRaspberryPi4_64bit;
       runVm = let
         uboot =
           (import nixpkgs
