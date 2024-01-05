@@ -73,7 +73,7 @@
         openssh.authorizedKeys.keyFiles = [
           (builtins.fetchurl {
             url = "https://github.com/n8henrie.keys";
-            sha256 = "1bhfxj9jlzqfvkz1j7bmqlzskcgali36ans7ajjgn0zc1998kqs9";
+            sha256 = "0dds17syy384lh3j0bm7k4aqqam7b67m3c6kk86gq0hfjd2vv231";
           })
         ];
       };
