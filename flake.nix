@@ -40,7 +40,7 @@
           subvolumes = ["@" "@boot" "@gnu" "@home" "@nix" "@snapshots" "@var"];
         };
     in {
-      default = self.outputs.btrfsPi3;
+      default = self.outputs.packages.${system}.btrfsPi3;
       btrfsPi3 = btrfsPi {};
       btrfsPi4 = btrfsPi {piVersion = 4;};
       uboot3 = ubootPkgs.ubootRaspberryPi3_64bit;
